@@ -293,14 +293,10 @@ document.addEventListener('DOMContentLoaded', function () {
     var reader             = vtk.IO.Geometry.vtkSTLReader.newInstance()
     //文件地址
     const stlFilePaths = [
-    'D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/nail1.stl',//钉子红色
-    'D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/mesh.stl',//骨头
-    'D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/jizuo.stl',
-    'D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/handle.stl',//导管红色
-    'D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/guide.stl'//导板红色
+
     ];
     //读取目标文件
-    reader.setUrl('D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/nail1.stl').then(() => {
+    reader.setUrl().then(() => {
                 // 获取读取器的输出数据
                 const stlOutput = reader.getOutputData();
 
@@ -327,7 +323,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // fullScreenRenderer.getRenderer().resetCamera();
                 // fullScreenRenderer.getRenderWindow().render();
             });
-    reader.setUrl( 'D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/mesh.stl').then(() => {
+    reader.setUrl().then(() => {
                 // 获取读取器的输出数据
                 const stlOutput = reader.getOutputData();
 
@@ -345,7 +341,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 fullScreenRenderer.getRenderer().resetCamera();
                 fullScreenRenderer.getRenderWindow().render();
             });
-    reader.setUrl( 'D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/jizuo.stl').then(() => {
+    reader.setUrl( ).then(() => {
                 // 获取读取器的输出数据
                 const stlOutput = reader.getOutputData();
 
@@ -370,7 +366,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // fullScreenRenderer.getRenderer().resetCamera();
                 // fullScreenRenderer.getRenderWindow().render();
             });
-    reader.setUrl( 'D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/handle.stl').then(() => {
+    reader.setUrl( ).then(() => {
                 // 获取读取器的输出数据
                 const stlOutput = reader.getOutputData();
 
@@ -395,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // fullScreenRenderer.getRenderer().resetCamera();
                 // fullScreenRenderer.getRenderWindow().render();
             });
-    reader.setUrl( 'D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/guide.stl').then(() => {
+    reader.setUrl( ).then(() => {
                 // 获取读取器的输出数据
                 const stlOutput = reader.getOutputData();
 
