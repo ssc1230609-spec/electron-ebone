@@ -1,4 +1,4 @@
-<img width="600" height="450" alt="vtk" src="https://github.com/user-attachments/assets/afeab3d3-030c-4537-ba3b-9eb2dac23eb4" /># electron-ebone
+# electron-ebone
 # 本科毕业设计内容：考虑不同开发者原因，只公开和electron相关的部分
 
 ## Electorn的学习链接
