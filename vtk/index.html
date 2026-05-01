@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" type="text/css" href="../assets/css/index.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body>
+    <div class="title-bar">
+    VTK
+    </div>
+    <div id="rectangle">
+      <a href="../../shouye.html"><img  src="../assets/images/fanhui.png" alt="返回" title="返回主页面"></a>
+      <img id="icon" src="../assets/images/wenjianjia.png" alt="Icon 1" title="打开文件夹">
+      <!-- <img id="icon2" src="../assets/images/img_1.png" alt="Icon 2" title="开始分割">
+      <img id="icon3" src="../assets/images/img_2.png" alt="Icon 3" title=""> -->
+      <img id='pick'src="../assets/images/img_3.png" alt="Icon 4"title="选点">
+      <div id="customMenu1">
+        <div id="clear1">清点</div>
+       </div>
+      <img id = "daoru"src="../assets/images/img_4.png" alt="Icon 5"title="导入模型">
+      <div id="customMenu2">
+          <div id="dao1">导入导板</div>
+          <div id="dao2">导入基座</div>
+          <div id="dao3">导入钉子</div>
+      </div>
+      <img id= "distance" src="../assets/images/img_5.png" alt="Icon 6" title="测距">
+      <div id="customMenu">
+        <div id="clear">清点</div>
+       </div>
+      <!-- <img src="../assets/images/img_6.png" alt="Icon 7"> -->
+      <a href="./index.html"><img id="icon4" src="../assets/images/img_7.png" alt="Icon 7"></a>
+    </div>
+    <div id="bottomRectangle">
+    </div>
+    <dvi id="new-div">
+      <div class="titlebar">参数</div>
+      <p></p>
+      <div id="datafont"><span id="datatext">入钉长度:</span><div class="data-box1"></div></div>
+      <div id="datafont"><span id="datatext">上下倾角:</span><div class="data-box2"></div></div>
+      <div id="datafont"><span id="datatext">左右倾角:</span><div class="data-box3"></div></div>
+      <div id="datafont"><span id="datatext">两点距离:</span><div class="data-box4"></div></div>
+      <div class="bottombar">
+        规划
+      </div>
+      <div id="checkbox-container">
+        <label>
+            <input type="checkbox" id="checkbox1" onchange="checkboxClicked(this)">
+            <span class="custom-checkbox">显示钉子</span>
+        </label>
+        <label>
+            <input type="checkbox" id="checkbox2" onchange="checkboxClicked1(this)">
+            <span class="custom-checkbox">显示导板</span>
+        </label>
+        <label>
+            <input type="checkbox" id="checkbox3" onchange="checkboxClicked2(this)">
+            <span class="custom-checkbox">显示基座</span>
+        </label>
+    </div>
+     </dvi>
+    <script type="module" src="./index.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/@babel/polyfill@7.12.1/dist/polyfill.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/vtk.js@30.3.1/vtk.js"></script>
+    <script type="text/javascript">
+    //距离右键菜单
+    document.getElementById("distance").addEventListener("contextmenu", function(event) {
+      // 阻止默认右键菜单
+      event.preventDefault();
+      
+      // 获取自定义菜单元素
+      var customMenu = document.getElementById("customMenu");
+      
+      // 计算菜单位置
+      customMenu.style.display = "block";
+      customMenu.style.left = event.pageX + "px";
+      customMenu.style.top = event.pageY-55 + "px";
+    });
+    //选点右键菜单
+    document.getElementById("pick").addEventListener("contextmenu", function(event) {
+      // 阻止默认右键菜单
+      event.preventDefault();
+      
+      // 获取自定义菜单元素
+      var customMenu1 = document.getElementById("customMenu1");
+      
+      // 计算菜单位置
+      customMenu1.style.display = "block";
+      customMenu1.style.left = event.pageX + "px";
+      customMenu1.style.top = event.pageY-55 + "px";
+    });
+    //导入模型右键菜单
+    document.getElementById("daoru").addEventListener("contextmenu", function(event) {
+      // 阻止默认右键菜单
+      event.preventDefault();
+      
+      // 获取自定义菜单元素
+      var customMenu2 = document.getElementById("customMenu2");
+      
+      // 计算菜单位置
+      customMenu2.style.display = "block";
+      customMenu2.style.left = event.pageX + "px";
+      customMenu2.style.top = event.pageY-55 + "px";
+    });
+    // 点击其他地方关闭菜单
+    document.addEventListener("click", function(event) {
+      var customMenu = document.getElementById("customMenu");
+      if (!event.target.closest("#customMenu")) {
+        customMenu.style.display = "none";
+      }
+    });// 点击其他地方关闭菜单
+    document.addEventListener("click", function(event) {
+      var customMenu1 = document.getElementById("customMenu1");
+      if (!event.target.closest("#customMenu1")) {
+        customMenu1.style.display = "none";
+      }
+    });
+    // 点击其他地方关闭菜单
+    document.addEventListener("click", function(event) {
+      var customMenu = document.getElementById("customMenu2");
+      if (!event.target.closest("#customMenu2")) {
+        customMenu2.style.display = "none";
+      }
+    });
+     //vtk初始   
+    const container = document.getElementById('bottomRectangle');
+    var fullScreenRenderer = vtk.Rendering.Misc.vtkFullScreenRenderWindow.newInstance({ rootContainer: container });
+    var actor              = vtk.Rendering.Core.vtkActor.newInstance();
+    var mapper             = vtk.Rendering.Core.vtkMapper.newInstance();
+    var cone               = vtk.Filters.Sources.vtkConeSource.newInstance();
+    var reader             = vtk.IO.Geometry.vtkSTLReader.newInstance()
+    var picker             = vtk.Rendering.Core.vtkCellPicker.newInstance();
+    var picker1            =vtk.Rendering.Core.vtkPointPicker.newInstance();
+    var renderWindow       = fullScreenRenderer.getRenderWindow();
+    var renderer            = fullScreenRenderer.getRenderer();
+    var sphere             =vtk.Filters.Sources.vtkSphereSource.newInstance();
+    var vtkMath           =vtk.Common.Core.Math
+
+    
+    // 创建一个 STL 模型的映射器
+    picker.setPickFromList(1);
+    picker.setTolerance(0);
+    picker.initializePickList();
+    //文件地址
+    const stlFilePaths = [
+    'D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/nail1.stl',//钉子红色
+    'D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/mesh.stl',//骨头
+    'D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/jizuo.stl',
+    'D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/handle.stl',//导管红色
+    'D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/guide.stl'//导板红色
+    ];
+    var actor1             = vtk.Rendering.Core.vtkActor.newInstance();
+    var actor2              = vtk.Rendering.Core.vtkActor.newInstance();
+    var actor3              = vtk.Rendering.Core.vtkActor.newInstance();
+    var actor4              = vtk.Rendering.Core.vtkActor.newInstance();
+    var actor5              = vtk.Rendering.Core.vtkActor.newInstance();
+    var mapper1             = vtk.Rendering.Core.vtkMapper.newInstance();
+    var mapper2            = vtk.Rendering.Core.vtkMapper.newInstance();
+    var mapper3            = vtk.Rendering.Core.vtkMapper.newInstance();
+    var mapper4            = vtk.Rendering.Core.vtkMapper.newInstance();
+    var mapper5            = vtk.Rendering.Core.vtkMapper.newInstance();
+    function checkboxClicked(checkbox) {
+                // 获取复选框的状态
+                if(checkbox.checked){
+                    fullScreenRenderer.getRenderer().addActor(actor1);
+                    fullScreenRenderer.getRenderer().resetCamera();
+                    fullScreenRenderer.getRenderWindow().render();
+                    picker.addPickList(actor1);
+                }else{
+                    fullScreenRenderer.getRenderer().removeActor(actor1);
+                    fullScreenRenderer.getRenderWindow().render();
+                }}
+    function checkboxClicked1(checkbox) {
+                // 获取复选框的状态
+                if(checkbox.checked){
+                    fullScreenRenderer.getRenderer().addActor(actor5);
+                    fullScreenRenderer.getRenderer().addActor(actor4);
+                    fullScreenRenderer.getRenderer().resetCamera();
+                    fullScreenRenderer.getRenderWindow().render();
+                    picker.addPickList(actor5);
+                    picker.addPickList(actor4);
+                }else{
+                    fullScreenRenderer.getRenderer().removeActor(actor5);
+                    fullScreenRenderer.getRenderer().removeActor(actor4);
+                    fullScreenRenderer.getRenderWindow().render();
+                }}
+    function checkboxClicked2(checkbox) {
+                // 获取复选框的状态
+                if(checkbox.checked){
+                    fullScreenRenderer.getRenderer().addActor(actor3);
+                    fullScreenRenderer.getRenderer().resetCamera();
+                    fullScreenRenderer.getRenderWindow().render();
+                    picker.addPickList(actor3);
+                }else{
+                    fullScreenRenderer.getRenderer().removeActor(actor3);
+                    fullScreenRenderer.getRenderWindow().render();
+                }}
+    //读取目标文件
+    reader.setUrl("D:/learning/electronvite-0304/zidongnail/savestl/nail1.stl").then(() => {
+                // 获取读取器的输出数据
+                const stlOutput = reader.getOutputData();
+
+                // 创建一个 STL 模型的映射器
+               
+                mapper1.setInputData(stlOutput);
+
+                // 创建一个 STL 模型的演员
+       
+                actor1.setMapper(mapper1);
+                //3.6 上午修改
+                document.getElementById("dao3").addEventListener("click", function() {
+                  container.style.right=30+'%';
+                const newDiv = document.getElementById('new-div');
+                newDiv.style.display = 'block';
+                // 将演员添加到渲染窗口中
+                fullScreenRenderer.getRenderer().addActor(actor1);
+                fullScreenRenderer.getRenderer().setBackground(0, 0, 0)
+                // 重新调整相机以适应所有演员
+                fullScreenRenderer.getRenderer().resetCamera();
+                // 渲染
+                fullScreenRenderer.getRenderWindow().render();
+                picker.addPickList(actor1);
+            });
+            });
+    reader.setUrl( "D:/learning/electronvite-0304/zidongnail/mesh(4).stl").then(() => {
+                // 获取读取器的输出数据
+                const stlOutput = reader.getOutputData();
+
+                // 创建一个 STL 模型的映射器
+               
+                mapper2.setInputData(stlOutput);
+
+                // 创建一个 STL 模型的演员
+                
+                actor2.setMapper(mapper2);
+
+                // 将演员添加到渲染窗口中
+                fullScreenRenderer.getRenderer().addActor(actor2);
+                fullScreenRenderer.getRenderer().setBackground(0, 0, 0)
+                fullScreenRenderer.getRenderer().resetCamera();
+                fullScreenRenderer.getRenderWindow().render();
+                picker.addPickList(actor2);
+            });
+    reader.setUrl( 'D:/learning/electronvite-0304/zidongnail/savestl/jizuo.stl').then(() => {
+                // 获取读取器的输出数据
+                const stlOutput = reader.getOutputData();
+
+                // 创建一个 STL 模型的映射器
+                
+                mapper3.setInputData(stlOutput);
+
+                // 创建一个 STL 模型的演员
+            
+                actor3.setMapper(mapper3);
+                document.getElementById("dao2").addEventListener("click", function() {
+                  container.style.right=30+'%';
+                const newDiv = document.getElementById('new-div');
+                newDiv.style.display = 'block';
+                // 将演员添加到渲染窗口中
+                fullScreenRenderer.getRenderer().addActor(actor3);
+                fullScreenRenderer.getRenderer().setBackground(0, 0, 0)
+                // 重新调整相机以适应所有演员
+                fullScreenRenderer.getRenderer().resetCamera();
+                // 渲染
+                fullScreenRenderer.getRenderWindow().render();
+                picker.addPickList(actor3);
+            });
+
+                // 将演员添加到渲染窗口中
+                // fullScreenRenderer.getRenderer().addActor(actor3);
+                // fullScreenRenderer.getRenderer().resetCamera();
+                // fullScreenRenderer.getRenderWindow().render();
+            });
+    reader.setUrl( 'D:/learning/electronvite-0304/zidongnail/savestl/handle.stl').then(() => {
+                // 获取读取器的输出数据
+                const stlOutput = reader.getOutputData();
+
+                // 创建一个 STL 模型的映射器
+                
+                mapper4.setInputData(stlOutput);
+
+                // 创建一个 STL 模型的演员
+            
+                actor4.setMapper(mapper4);
+                document.getElementById("dao1").addEventListener("click", function() {
+                container.style.right=30+'%';
+                const newDiv = document.getElementById('new-div');
+                newDiv.style.display = 'block';
+                // 将演员添加到渲染窗口中
+                fullScreenRenderer.getRenderer().addActor(actor4);
+                fullScreenRenderer.getRenderer().setBackground(0, 0, 0)
+                // 重新调整相机以适应所有演员
+                fullScreenRenderer.getRenderer().resetCamera();
+                // 渲染
+                fullScreenRenderer.getRenderWindow().render();
+                picker.addPickList(actor4);
+            });
+                // // 将演员添加到渲染窗口中
+                // fullScreenRenderer.getRenderer().addActor(actor4);
+                // fullScreenRenderer.getRenderer().resetCamera();
+                // fullScreenRenderer.getRenderWindow().render();
+            });
+    reader.setUrl( 'D:/learning/electronvite-0304/zidongnail/savestl/guide.stl').then(() => {
+                // 获取读取器的输出数据
+                const stlOutput = reader.getOutputData();
+
+                // 创建一个 STL 模型的映射器
+           
+                mapper5.setInputData(stlOutput);
+
+                // 创建一个 STL 模型的演员
+               
+                actor5.setMapper(mapper5);
+                document.getElementById("dao1").addEventListener("click", function() {
+                  container.style.right=30+'%';
+                const newDiv = document.getElementById('new-div');
+                newDiv.style.display = 'block';
+                // 将演员添加到渲染窗口中
+                fullScreenRenderer.getRenderer().addActor(actor5);
+                fullScreenRenderer.getRenderer().setBackground(0, 0, 0)
+                // 重新调整相机以适应所有演员
+                fullScreenRenderer.getRenderer().resetCamera();
+                // 渲染
+                fullScreenRenderer.getRenderWindow().render();
+                picker.addPickList(actor5);
+            });
+                // 将演员添加到渲染窗口中
+                // fullScreenRenderer.getRenderer().addActor(actor5);
+                // fullScreenRenderer.getRenderer().resetCamera();
+                // fullScreenRenderer.getRenderWindow().render();
+            });
+    
+    
+    //选点
+    let pointCount1 = 0;
+    let firstpoint, secondpoint, thirdpoint;
+    let SphereActor1, SphereActor2, SphereActor3;
+    var hasClicked1 =false;   
+    function stringtoarray(point1,point2,point3) {
+      const coordinates1 = point1.split(',').map(Number);
+      console.log(coordinates1)
+      const coordinates2 = point2.split(',').map(Number);
+      const coordinates3 = point3.split(',').map(Number);
+      const array = [coordinates1, coordinates2, coordinates3];
+      return array;
+    }
+    document.getElementById("pick").addEventListener("click", function() {
+     if(!hasClicked1){
+    renderWindow.getInteractor().onRightButtonPress(async (callData) => {
+      if (renderer !== callData.pokedRenderer) {
+        return;
+      }
+      const pos = callData.position;
+      const point = [pos.x, pos.y, 0.0];
+      console.log(`Pick at: ${point}`);
+      picker.pick(point, renderer);
+      picker1.pick(point, renderer);
+      if (picker.getActors().length === 0) {
+        const pickedPoint = picker.getPickPosition();
+        console.log(`No point picked, default: ${pickedPoint}`);
+        sphere.setCenter(pickedPoint);
+        sphere.setRadius(2);
+        const sphereMapper = vtk.Rendering.Core.vtkMapper.newInstance();
+        sphereMapper.setInputData(sphere.getOutputData());
+        const sphereActor = vtk.Rendering.Core.vtkActor.newInstance();
+        sphereActor.setMapper(sphereMapper);
+        sphereActor.getProperty().setColor(1.0, 0.0, 0.0);
+        renderer.addActor(sphereActor);
+      } else {
+        const pickedCellId = picker.getCellId();
+        console.log('Picked ID: ', pickedCellId);
+        const pickedPoints = picker.getPickedPositions();
+        for (let i = 0; i < pickedPoints.length; i++) {
+          const pickedPoint = pickedPoints[i];
+          console.log(`Picked 坐标: ${pickedPoint}`);
+          if(pointCount1==0){
+            firstpoint = pickedPoint;
+            firstpoint = firstpoint.toString();
+            console.log('第一个点',firstpoint);
+          }else if(pointCount1==1){
+            secondpoint = pickedPoint;
+            secondpoint = secondpoint.toString();
+          }else if(pointCount1==2){
+            thirdpoint = pickedPoint;
+            thirdpoint = thirdpoint.toString();
+            const array = stringtoarray(firstpoint,secondpoint,thirdpoint);
+            const result = await window.electronapi.path(array)
+            console.log('返回的信息',result)
+            console.log(array);
+            // 假设result是一个包含三行文本的字符串，使用换行符分隔
+            const resultLines = result.split('\n');
+
+            // 如果result中至少有三行，将它们分配给不同的变量
+            if (resultLines.length >= 3) {
+                const line1 = resultLines[0]; // 第一行
+                const line2 = resultLines[1]; // 第二行
+                const line3 = resultLines[2]; // 第三行
+                
+                // 现在你可以根据需要使用变量line1、line2和line3
+                console.log('第一行：', line1);
+                console.log('第二行：', line2);
+                console.log('第三行：', line3);
+                document.querySelector('.data-box1').textContent =line1
+                document.querySelector('.data-box2').textContent =line2
+                document.querySelector('.data-box3').textContent =line3
+                } else {
+                console.error('结果中没有包含三行文本。');
+            }
+          
+
+          }else if(pointCount1==3){
+            renderer.removeActor(SphereActor1);
+            pointCount1 = 2; // 重置计数器为2
+            firstpoint = secondpoint; // 将第二个点赋值给第一个点
+            secondpoint= thirdpoint;
+            SphereActor1 = SphereActor2; // 更新第一个点的actor
+            SphereActor2 = SphereActor3; // 更新第二个点的actor
+          }
+          sphere.setCenter(pickedPoint);
+          sphere.setRadius(1);
+          const sphereMapper = vtk.Rendering.Core.vtkMapper.newInstance();
+          sphereMapper.setInputData(sphere.getOutputData());
+          const sphereActor = vtk.Rendering.Core.vtkActor.newInstance();
+          sphereActor.setMapper(sphereMapper);
+          sphereActor.getProperty().setColor(0.0, 1.0, 0.0);
+          if (pointCount1 === 0) {
+                SphereActor1 = sphereActor; // 存储第一个选取点的actor
+            } else if (pointCount1 === 1) {
+                SphereActor2 = sphereActor; // 存储第二个选取点的actor
+            }else if(pointCount1 == 2){
+              SphereActor3 = sphereActor; // 存储第三个选取点的actor
+            }
+          renderer.addActor(sphereActor);
+          pointCount1++; // 每选取一个点，计数器加一
+            if (pointCount1 >= 3) {
+            break;
+          }
+        }
+      }
+      renderWindow.render();
+    });
+    document.getElementById("clear1").addEventListener("click", function() {
+        renderer.removeActor(SphereActor1); 
+        renderer.removeActor(SphereActor2); 
+        renderer.removeActor(SphereActor3);
+        renderWindow.render();
+        pointCount1 = 0;
+        firstpoint = null;
+        secondpoint = null;
+        thirdpoint = null;
+        hasClicked1 = true;
+    });
+    hasClicked1 = true;}
+      
+  })
+    //测距
+    let pointCount = 0;
+    let firstPickedPoint, secondPickedPoint;
+    let sphereActor1, sphereActor2; 
+    function euclideanDistance(point1, point2) {
+    // 将坐标字符串转换为坐标数组
+    const coordinates1 = point1.split(',').map(Number);
+    const coordinates2 = point2.split(',').map(Number);
+    console.log(coordinates1);
+    // 计算两个点的欧氏距离
+    // 提取坐标值
+    const [x1, y1, z1] = coordinates1;
+    const [x2, y2, z2] = coordinates2;
+
+    // 计算欧几里得距离
+    const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2) + Math.pow(z2 - z1, 2));
+
+    return distance;
+}
+    var hasClicked = false;
+    const Distance = function() {
+      if (!hasClicked) {
+      renderWindow.getInteractor().onMiddleButtonPress((callData) => {
+        if (pointCount >= 2) {
+            return; // 如果已经选取了两个点，则不再处理更多的选取
+        }
+      if (renderer !== callData.pokedRenderer) {
+        return;
+      }
+      const pos = callData.position;
+      const point = [pos.x, pos.y, 0.0];
+      console.log(`测距Pick at: ${point}`);
+      picker.pick(point, renderer);
+      const pickedCellId = picker.getCellId();
+        console.log('测距Picked ID: ', pickedCellId);
+        const pickedPoints = picker.getPickedPositions();
+        for (let i = 0; i < pickedPoints.length; i++) {
+          const pickedPoint = pickedPoints[i];
+          console.log(`测距Picked 坐标: ${pickedPoint}`);
+          if (pointCount === 0) {
+                firstPickedPoint = pickedPoint; // 存储第一个选取的点
+                firstPickedPoint = firstPickedPoint.toString();
+                console.log('第一个选取的点:', firstPickedPoint);
+            } else if (pointCount === 1) {
+                secondPickedPoint = pickedPoint; // 存储第二个选取的点
+                secondPickedPoint = secondPickedPoint.toString();
+                const distance = euclideanDistance(firstPickedPoint, secondPickedPoint); // 计算两个点的欧氏距离
+                document.querySelector('.data-box4').textContent =distance
+                console.log('两点之间的欧氏距离:', distance);
+            }else if (pointCount === 2) {
+                // 如果已经选取了两个点，再选取第三个点时取消第一个点
+                renderer.removeActor(sphereActor1);
+                pointCount = 1; // 重置计数器为1
+                firstPickedPoint = secondPickedPoint; // 将第二个点赋值给第一个点
+                firstPickedPoint = firstPickedPoint.toString();
+                sphereActor1 = sphereActor2; // 更新第一个点的actor
+            }
+          sphere.setCenter(pickedPoint);
+          sphere.setRadius(2);
+          const sphereMapper = vtk.Rendering.Core.vtkMapper.newInstance();
+          sphereMapper.setInputData(sphere.getOutputData());
+          const sphereActor = vtk.Rendering.Core.vtkActor.newInstance();
+          sphereActor.setMapper(sphereMapper);
+          sphereActor.getProperty().setColor(0.0, 1.0, 0.0);
+          if (pointCount === 0) {
+                sphereActor1 = sphereActor; // 存储第一个选取点的actor
+            } else if (pointCount === 1) {
+                sphereActor2 = sphereActor; // 存储第二个选取点的actor
+            }
+          renderer.addActor(sphereActor);
+          pointCount++; // 每选取一个点，计数器加一
+            if (pointCount >= 2) {
+                break; // 如果已经选取了两个点，则不再处理更多的选取
+            }
+        }
+     renderWindow.render();
+    })
+    hasClicked = true;
+  
+    
+  }
+  }
+  document.getElementById("distance").addEventListener("click", Distance);
+  document.getElementById("clear").addEventListener("click", function() {
+        renderer.removeActor(sphereActor1); 
+        renderer.removeActor(sphereActor2); 
+        renderWindow.render();
+        pointCount = 0;
+        firstPickedPoint = null;
+        secondPickedPoint = null;
+        hasClicked = true;
+        document.querySelector('.data-box4').textContent =""
+    });
+    </script>
+</html>

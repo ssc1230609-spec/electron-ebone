@@ -1,0 +1,114 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(-90deg, #29bdd9 0%, #276ace 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  flex-direction: column; /* 纵向居中 */
+}
+
+.title-bar {
+  color: #fff;
+  text-align: center;
+  padding: 8px 0;
+  -webkit-app-region: drag; /* 允许窗口拖动 */
+  position: fixed; /* 固定在顶部 */
+  top: 0; /* 距离顶部为0 */
+  font-family: "Microsoft YaHei UI", sans-serif; /* 设置字体为 Microsoft YaHei UI */
+}
+
+#rectangle {
+  border: 2px solid #ffffff;
+  position: absolute;
+  top: calc(5% + 2%); /* 位于#title-bar下方且相隔50px */
+  left: 2%;
+  height: 80%; 
+  display: flex;
+  flex-direction: column; /* 图标垂直排列 */
+  justify-content: space-between; /* 使图标水平间隔相等 */
+  align-items: center;
+  padding:20px; /* 设置图标之间的间隔为5px */
+}
+
+#rectangle img {
+  display: block;
+  width: 28px; /* 设置图标的宽度 */
+  height: 30px; /* 设置图标的高度 */
+  transition: color 0.2s; /* 添加过渡效果，使颜色变化平滑 */
+  cursor: pointer; /* 设置光标为小手 */
+}
+
+#rectangle img:hover {
+  filter: brightness(100); /* 鼠标滑过时增加亮度，可以根据需要调整值 */
+}
+
+#bottomRectangle {
+  display: flex;
+  border: 2px solid #ffffff;
+  position: absolute;
+  top: calc(5% + 2%); 
+  left: calc(5% + 8%);
+  right: 2%;
+  height: 80%;
+  padding: 20px; 
+  justify-content: space-between; 
+  align-items: center; 
+
+}
+#enabledElement {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  position: relative;
+  
+}
+
+#imageSlider1{
+  right: 0; /* 将滑块置于 enabledElement 的右侧 */
+  top: 0; /* 将滑块垂直居中 */
+  height: 100%; /* 让滑块的高度与 enabledElement 一致 */
+  width: 50px; /* 控制滑块的宽度 */
+  position:absolute;
+  transform: rotate(180deg);
+  -webkit-appearance: slider-vertical; /* 兼容性设置 */
+}
+
+#imageSlider {
+  right: 0; /* 将滑块置于 enabledElement 的右侧 */
+  top: 0; /* 将滑块垂直居中 */
+  height: 100%; /* 让滑块的高度与 enabledElement 一致 */
+  width: 12%; /* 增大滑块靠左 */
+  position:absolute;
+  transform: rotate(180deg);
+  -webkit-appearance: slider-vertical; /* 兼容性设置 */
+}
+#enabledElements {
+  width: 43.5%;
+  height: 50%;
+  left: 8%;
+  display: flex;
+  position: relative;
+  display: none;
+}
+#enabledElements img {
+  width: 90%;/*增大滑块靠右 */
+  height:100%;
+ 
+}
+
+
+#enabledElement2 {
+  width: 50%;
+  height: 50%;
+  display: flex;
+  position: relative;
+}
+
+
+
+/* 隐藏默认文件上传样式 */
+input[type="file"] {
+  display: none;
+}

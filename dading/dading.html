@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" type="text/css" href="../assets/css/dading.css">
+  <script src="https://unpkg.com/cornerstone-core@2.6.1/dist/cornerstone.js"></script>
+  <script src="https://unpkg.com/cornerstone-tools@6.0.8/dist/cornerstoneTools.js"></script>
+  <script src="https://unpkg.com/cornerstone-wado-image-loader@4.1.5/dist/cornerstoneWADOImageLoader.bundle.min.js"></script>
+  <script src="https://unpkg.com/dicom-parser@1.8.13/dist/dicomParser.js"></script>
+  <script src="https://unpkg.com/cornerstone-math@0.1.10/dist/cornerstoneMath.min.js"></script>
+  <script type="text/javascript" src="https://unpkg.com/@babel/polyfill@7.0.0/dist/polyfill.js"></script>
+  <script type="text/javascript" src="https://unpkg.com/vtk.js"></script>
+</head>
+<body>
+  <div class="title-bar">
+    nnU-Net
+  </div>
+  <div id="rectangle">
+    <a href="../../shouye.html"><img  src="../assets/images/fanhui.png" alt="返回"></a>
+    <!-- 添加label标签，优化input标签样式 -->
+    <label for="fileInput">
+      <img id="icon" src="../assets/images/wenjianjia.png" alt="Icon 1">
+    </label>
+    <input type="file" id="fileInput" onchange="processFiles()" webkitdirectory directory multiple>
+    <img id="icon2" src="../assets/images/img_1.png" alt="Icon 2">
+    <img id="icon3" src="../assets/images/img_4.png" alt="Icon 3">
+    <img src="../assets/images/tuxiang-suoxiao-01.png" alt="Icon 4">
+    <img src="../assets/images/tuxiangfuwei.png" alt="Icon 5">
+    <img src="../assets/images/tuxiangpingyi.png" alt="Icon 6">
+    <!-- <img src="../assets/images/img_6.png" alt="Icon 7"> -->
+    <a href="./dading.html"><img id="icon4" src="../assets/images/img_7.png" alt="Icon 7"></a>
+  </div>
+  <div id="bottomRectangle">
+    <div id="enabledElement" >
+        <input type="range" id="imageSlider1"  value="0">
+    </div> 
+    
+      <div id="enabledElements">
+        <input type="range" id="imageSlider"  value="0">
+      </div>
+      <div id="enabledElement2">
+      </div>
+    
+  </div>
+</body>
+<script>
+  // cornerstone初始化
+  cornerstoneTools.init({
+      touchEnabled: false,
+      showSVGCursors: false
+    }); 
+    cornerstoneTools.external.cornerstone = cornerstone;
+    cornerstoneTools.external.cornerstoneMath = cornerstoneMath;
+
+    cornerstoneWADOImageLoader.webWorkerManager.initialize({
+      maxWebWorkers: navigator.hardwareConcurrency || 1,
+      startWebWorkersOnDemand: true,
+      taskConfiguration: {
+        decodeTask: {
+          initializeCodecsOnStartup: false
+        }
+      },
+      webWorkerTaskPaths: [
+        "https://unpkg.com/cornerstone-wado-image-loader@4.1.5/dist/610.bundle.min.worker.js",
+      ]
+    });
+    cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
+    cornerstoneWADOImageLoader.external.dicomParser = dicomParser;
+    const element = document.getElementById("enabledElement");
+    cornerstone.enable(element);
+    const StackScrollTool = cornerstoneTools.StackScrollTool;
+    const StackScrollMouseWheelTool = cornerstoneTools.StackScrollMouseWheelTool;
+    let imageIds = [];
+    //隐藏控制条
+    window.onload = function() {
+      document.getElementById("imageSlider1").style.display = "none";
+    }
+    function processFiles() {
+      clearLoadedImages()
+      const fileInput = document.getElementById('fileInput');
+      fileInput.addEventListener('click', function(e){
+        enabledElement.style.display = "block";
+        enabledElements.style.display = "none";
+        enabledElement2.style.display = "none";
+        imageSlider.style.display = "none";
+      });
+      const files = fileInput.files;
+
+    
+      const dcmFiles = [];
+      for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          if (file.type === 'application/dicom' || file.name.endsWith('.dcm')) {
+              dcmFiles.push(file);
+          }
+      }
+      console.log(dcmFiles);
+      for (let i = 0; i < dcmFiles.length; i++){
+          const file = dcmFiles[i];
+          const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+          // console.log(imageId);
+          // 添加到imageIds数组中
+          imageIds.push(imageId);
+          loadAndDisplayImage(imageIds)
+      }
+      console.log(imageIds.length);
+      var slider1 = document.getElementById('imageSlider1');
+      slider1.value = currentIndex;
+      slider1.min = 0;
+      slider1.max = imageIds.length - 1;
+      //onchange事件触发后显示控制条
+      document.getElementById('imageSlider1').style.display = 'block';
+    }
+    //放入堆栈
+    function loadAndDisplayImage(imageIds) {
+      const stack = {
+        currentImageIdIndex: 0,
+        imageIds: imageIds
+      };
+      
+    cornerstone.loadImage(imageIds[0]).then((image) => {
+      cornerstone.displayImage(element, image);
+      cornerstoneTools.addStackStateManager(element, ['stack']);
+      cornerstoneTools.addToolState(element, 'stack', stack);
+      cornerstoneTools.addTool(StackScrollTool, {
+        configuration: {
+          loop: true,
+          allowSkipping: true
+        }
+      });
+      cornerstoneTools.addTool(StackScrollMouseWheelTool, {
+        configuration: {
+          loop: true,
+          allowSkipping: true,
+          invert: false
+        },
+      });
+      cornerstoneTools.setToolActive('StackScroll', { mouseButtonMask: 1 });
+      cornerstoneTools.setToolActive("StackScrollMouseWheel", { mouseButtonMask: 4 });
+    });
+   }
+   //导入scroll和scrollToIndex工具
+   const scroll = cornerstoneTools.importInternal("util/scroll");
+   const scrollToIndex = cornerstoneTools.importInternal("util/scrollToIndex");
+   // 监听鼠标滚轮事件
+   var currentIndex = 0;
+   scrollToIndex(element, currentIndex);
+  document.addEventListener('wheel', function(event) {
+    if(event.target.tagName.toLowerCase() === 'canvas'){
+      event.preventDefault();
+      
+      var delta = Math.sign(event.deltaY);
+      var newIndex = currentIndex + delta;
+      
+      // 边界值处理
+      if (newIndex < 0) {
+          newIndex = 0;
+      } else if (newIndex >= imageIds.length) {
+          newIndex = imageIds.length - 1;
+      }
+      currentIndex = newIndex;
+      var slider1 = document.getElementById('imageSlider1');
+      slider1.value = currentIndex;
+      // 显示新的图片
+      scrollToIndex(element, newIndex);}
+     
+  }, { passive: false });
+ 
+  // 监听控制条变化
+  document.getElementById('imageSlider1').addEventListener('input', function(event) {
+      var newIndex = parseInt(event.target.value);
+      currentIndex = newIndex;
+      scrollToIndex(element, newIndex);
+  });
+  function clearLoadedImages() {
+    // 清除影像
+    cornerstone.imageCache.purgeCache();
+    // 重置 imageIds 数组
+    imageIds = [];
+    // 重置 currentIndex
+    currentIndex = 0;
+    // 清除控制条
+    var slider1 = document.getElementById('imageSlider1');
+    slider1.value = 0;
+    slider1.min = 0;
+    slider1.max = 0;
+    // 隐藏控制条
+    slider1.style.display = 'none';
+}
+
+
+</script>
+<script type="text/javascript">
+//鼠标点击后加载三维模型
+document.addEventListener('DOMContentLoaded', function () {
+    const icon2 = document.getElementById('icon2');
+    icon2.addEventListener('click', function (event) {
+    enabledElement.style.display = "none";
+    enabledElements.style.display = "block";
+    enabledElement2.style.display = "block";
+    imageSlider.style.display = "block";
+    // 获取包含所有图片的文件夹路径
+    var imageFolder = 'D:/program/ruanj/0012/output_slices/';
+    var imagePaths = [];
+    // 将图片路径存入数组
+    for (var i = 1; i <= 200; i++) {
+        var imagePath = imageFolder + 'slice_' + i + '.png';
+        imagePaths.push(imagePath);
+    }
+    document.getElementById('imageSlider').min = 0;
+    document.getElementById('imageSlider').max = imagePaths.length - 1;
+    // 预加载图片
+    var images = [];
+    for (var i = imagePaths.length-1; i >= 0 ; i--) {
+        var img = new Image();
+        img.src = imagePaths[i];
+        images.push(img);
+        document.getElementById('enabledElements').appendChild(img); // 将图像添加到容器中
+    }
+    // 显示图片
+    var imageContainer = document.getElementById('enabledElements');
+    var currentIndex = 0;
+
+    function showImage(index) {
+        if (index < 0 || index >= images.length) {
+            return;
+        }
+
+        // 隐藏所有图片
+        for (var i = 0; i < images.length; i++) {
+            images[i].style.display = 'none';
+        }
+
+        // 显示当前图片
+        images[index].style.display = 'block';
+        currentIndex = index;
+        document.getElementById('imageSlider').value = index;
+    }
+    // 初始显示第一张图片
+    showImage(currentIndex);
+    // 监听鼠标滚轮事件
+    document.addEventListener('wheel', function(event) {
+      //检查鼠标是否在图片上以此来监听滚轮效果
+      if(event.target.tagName.toLowerCase() === 'img'){
+        event.preventDefault();
+
+        var delta = Math.sign(event.deltaY);
+        var newIndex = currentIndex + delta;
+
+        // 边界值处理
+        if (newIndex < 0) {
+            newIndex = 0;
+        } else if (newIndex >= images.length) {
+            newIndex = images.length - 1;
+        }
+
+        // 显示新的图片
+        showImage(newIndex);}
+    }, { passive: false });
+    // 监听控制条变化
+    document.getElementById('imageSlider').addEventListener('input', function(event) {
+        var newIndex = parseInt(event.target.value);
+        showImage(newIndex);
+    });
+    //清除img标签
+    function clear(){
+
+        var imageContainer = document.getElementById('enabledElements');
+        var imgs = imageContainer.querySelectorAll('img');
+        imgs.forEach(function(img) {
+            imageContainer.removeChild(img);
+          });
+        images=[],
+        currentIndex=0;
+    }
+    //点击后清除
+    document.getElementById('icon').addEventListener('click', function (event) {
+        clear();
+    })
+
+
+
+
+
+
+      //vtk初始   
+    const container = document.getElementById('enabledElement2');
+    var fullScreenRenderer = vtk.Rendering.Misc.vtkFullScreenRenderWindow.newInstance({ rootContainer: container });
+    var actor              = vtk.Rendering.Core.vtkActor.newInstance();
+    var mapper             = vtk.Rendering.Core.vtkMapper.newInstance();
+    var cone               = vtk.Filters.Sources.vtkConeSource.newInstance();
+    var reader             = vtk.IO.Geometry.vtkSTLReader.newInstance()
+    //文件地址
+    const stlFilePaths = [
+    'D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/nail1.stl',//钉子红色
+    'D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/mesh.stl',//骨头
+    'D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/jizuo.stl',
+    'D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/handle.stl',//导管红色
+    'D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/guide.stl'//导板红色
+    ];
+    //读取目标文件
+    reader.setUrl('D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/nail1.stl').then(() => {
+                // 获取读取器的输出数据
+                const stlOutput = reader.getOutputData();
+
+                // 创建一个 STL 模型的映射器
+                var mapper1             = vtk.Rendering.Core.vtkMapper.newInstance();
+                mapper1.setInputData(stlOutput);
+
+                // 创建一个 STL 模型的演员
+                var actor1             = vtk.Rendering.Core.vtkActor.newInstance();
+                actor1.setMapper(mapper1);
+                //3.6 上午修改
+                document.getElementById("icon3").addEventListener("click", function() {
+                // 将演员添加到渲染窗口中
+                fullScreenRenderer.getRenderer().addActor(actor1);
+                fullScreenRenderer.getRenderer().setBackground(0, 0, 0)
+                // 重新调整相机以适应所有演员
+                fullScreenRenderer.getRenderer().resetCamera();
+                // 渲染
+                fullScreenRenderer.getRenderWindow().render();
+            });
+
+                // 将演员添加到渲染窗口中
+                // fullScreenRenderer.getRenderer().addActor(actor1);
+                // fullScreenRenderer.getRenderer().resetCamera();
+                // fullScreenRenderer.getRenderWindow().render();
+            });
+    reader.setUrl( 'D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/mesh.stl').then(() => {
+                // 获取读取器的输出数据
+                const stlOutput = reader.getOutputData();
+
+                // 创建一个 STL 模型的映射器
+                var mapper2            = vtk.Rendering.Core.vtkMapper.newInstance();
+                mapper2.setInputData(stlOutput);
+
+                // 创建一个 STL 模型的演员
+                var actor2              = vtk.Rendering.Core.vtkActor.newInstance();
+                actor2.setMapper(mapper2);
+
+                // 将演员添加到渲染窗口中
+                fullScreenRenderer.getRenderer().addActor(actor2);
+                fullScreenRenderer.getRenderer().setBackground(0, 0, 0)
+                fullScreenRenderer.getRenderer().resetCamera();
+                fullScreenRenderer.getRenderWindow().render();
+            });
+    reader.setUrl( 'D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/jizuo.stl').then(() => {
+                // 获取读取器的输出数据
+                const stlOutput = reader.getOutputData();
+
+                // 创建一个 STL 模型的映射器
+                var mapper3            = vtk.Rendering.Core.vtkMapper.newInstance();
+                mapper3.setInputData(stlOutput);
+
+                // 创建一个 STL 模型的演员
+                var actor3              = vtk.Rendering.Core.vtkActor.newInstance();
+                actor3.setMapper(mapper3);
+                document.getElementById("icon3").addEventListener("click", function() {
+                // 将演员添加到渲染窗口中
+                fullScreenRenderer.getRenderer().addActor(actor3);
+                fullScreenRenderer.getRenderer().setBackground(0, 0, 0)
+                // 重新调整相机以适应所有演员
+                fullScreenRenderer.getRenderer().resetCamera();
+                // 渲染
+                fullScreenRenderer.getRenderWindow().render();
+            });
+                // 将演员添加到渲染窗口中
+                // fullScreenRenderer.getRenderer().addActor(actor3);
+                // fullScreenRenderer.getRenderer().resetCamera();
+                // fullScreenRenderer.getRenderWindow().render();
+            });
+    reader.setUrl( 'D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/handle.stl').then(() => {
+                // 获取读取器的输出数据
+                const stlOutput = reader.getOutputData();
+
+                // 创建一个 STL 模型的映射器
+                var mapper4            = vtk.Rendering.Core.vtkMapper.newInstance();
+                mapper4.setInputData(stlOutput);
+
+                // 创建一个 STL 模型的演员
+                var actor4              = vtk.Rendering.Core.vtkActor.newInstance();
+                actor4.setMapper(mapper4);
+                document.getElementById("icon3").addEventListener("click", function() {
+                // 将演员添加到渲染窗口中
+                fullScreenRenderer.getRenderer().addActor(actor4);
+                fullScreenRenderer.getRenderer().setBackground(0, 0, 0)
+                // 重新调整相机以适应所有演员
+                fullScreenRenderer.getRenderer().resetCamera();
+                // 渲染
+                fullScreenRenderer.getRenderWindow().render();
+            });
+                // // 将演员添加到渲染窗口中
+                // fullScreenRenderer.getRenderer().addActor(actor4);
+                // fullScreenRenderer.getRenderer().resetCamera();
+                // fullScreenRenderer.getRenderWindow().render();
+            });
+    reader.setUrl( 'D:/learning/electrontest/毕设准备/03electron-three/2.electron-three/stl/guide.stl').then(() => {
+                // 获取读取器的输出数据
+                const stlOutput = reader.getOutputData();
+
+                // 创建一个 STL 模型的映射器
+                var mapper5            = vtk.Rendering.Core.vtkMapper.newInstance();
+                mapper5.setInputData(stlOutput);
+
+                // 创建一个 STL 模型的演员
+                var actor5              = vtk.Rendering.Core.vtkActor.newInstance();
+                actor5.setMapper(mapper5);
+                document.getElementById("icon3").addEventListener("click", function() {
+                // 将演员添加到渲染窗口中
+                fullScreenRenderer.getRenderer().addActor(actor5);
+                fullScreenRenderer.getRenderer().setBackground(0, 0, 0)
+                // 重新调整相机以适应所有演员
+                fullScreenRenderer.getRenderer().resetCamera();
+                // 渲染
+                fullScreenRenderer.getRenderWindow().render();
+            });
+                // 将演员添加到渲染窗口中
+                // fullScreenRenderer.getRenderer().addActor(actor5);
+                // fullScreenRenderer.getRenderer().resetCamera();
+                // fullScreenRenderer.getRenderWindow().render();
+            });
+      
+    });
+  });
+     
+</script>
+</html>
