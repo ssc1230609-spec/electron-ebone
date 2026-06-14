@@ -1,4 +1,29 @@
-const { contextBridge,ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('electronapi',{
-    path:(path)=>ipcRenderer.invoke('return-path',path)
+    path:(path, modelPath)=>ipcRenderer.invoke('return-path',path, modelPath),
+    openDicomFolder:()=>ipcRenderer.invoke('open-dicom-folder'),
+    openStlFile:()=>ipcRenderer.invoke('open-stl-file'),
+    openNiftiFile:()=>ipcRenderer.invoke('open-nifti-file'),
+    readRawVolume:(dirPath)=>ipcRenderer.invoke('read-raw-volume',dirPath),
+    readNiftiDirect:(niftiPath)=>ipcRenderer.invoke('read-nifti-direct',niftiPath),
+    readConfig:(dirPath)=>ipcRenderer.invoke('read-config',dirPath),
+    toggleDevTools:()=>ipcRenderer.invoke('toggle-dev-tools'),
+    resizeWindow:(widthDelta)=>ipcRenderer.invoke('resize-window',widthDelta),
+    checkExistingSegmentation:(inputFolder)=>ipcRenderer.invoke('check-existing-segmentation',inputFolder),
+    checkExistingStl:(outputFolder)=>ipcRenderer.invoke('check-existing-stl',outputFolder),
+    runInference:(inputFolder,outputFolder)=>ipcRenderer.invoke('run-nnunet-inference',inputFolder,outputFolder),
+    convertNiftiToStl:(niftiPath,stlPath,labelId)=>ipcRenderer.invoke('convert-nifti-to-stl',niftiPath,stlPath,labelId),
+    readStlFile:(filePath)=>ipcRenderer.invoke('read-stl-file',filePath),
+    onInferenceProgress:(callback)=>{ipcRenderer.removeAllListeners('inference-progress');ipcRenderer.on('inference-progress',(event,data)=>callback(data));},
+    onConversionProgress:(callback)=>{ipcRenderer.removeAllListeners('conversion-progress');ipcRenderer.on('conversion-progress',(event,data)=>callback(data));},
+    aiChat:(argJson)=>ipcRenderer.invoke('ai-chat',argJson),
+    onAiChatStream:(callback)=>{ipcRenderer.removeAllListeners('ai-chat-stream');ipcRenderer.on('ai-chat-stream',(event,data)=>callback(data));},
+    openAiPanel:()=>ipcRenderer.invoke('open-ai-panel'),
+    getAiContext:()=>ipcRenderer.invoke('get-ai-context'),
+    aiMinimize:()=>ipcRenderer.invoke('ai-minimize'),
+    aiMaximize:()=>ipcRenderer.invoke('ai-maximize'),
+    aiClose:()=>ipcRenderer.invoke('ai-close'),
+    onGenerateProgress:(callback)=>{ipcRenderer.removeAllListeners('generate-progress');ipcRenderer.on('generate-progress',(event,data)=>callback(data));},
+    adjustParameters:(params)=>ipcRenderer.invoke('adjust-parameters',params),
+    regenerateModels:(params)=>ipcRenderer.invoke('regenerate-models',params),
 })

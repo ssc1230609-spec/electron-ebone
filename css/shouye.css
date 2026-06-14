@@ -30,15 +30,34 @@ body {
     right: 2%;
     height: 90%; 
     display: flex;
-    justify-content: space-between; /* 使图标水平间隔相等 */
+    justify-content: center;
     align-items: center;
-    padding: 0 50px; /* 设置图标之间的间隔为5px */
+    gap: 200px;
   }
  
   #rectangle img {
     display: block;
-    width: 100px; /* 设置图标的宽度 */
-    height: 100px; /* 设置图标的高度 */
-    transition: color 0.2s; /* 添加过渡效果，使颜色变化平滑 */
-    cursor: pointer; /* 设置光标为小手 */
+    width: 100px;
+    height: 100px;
+    transition: transform 0.2s;
+    cursor: pointer;
+  }
+
+  .module-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+  }
+
+  .module-btn span {
+    color: #fff;
+    font-size: 16px;
+    font-family: "Microsoft YaHei UI", sans-serif;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+
+  .module-btn:hover img {
+    transform: scale(1.1);
   }
