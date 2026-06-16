@@ -4,421 +4,1148 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" type="text/css" href="../assets/css/dading.css">
-  <script src="https://unpkg.com/cornerstone-core@2.6.1/dist/cornerstone.js"></script>
-  <script src="https://unpkg.com/cornerstone-tools@6.0.8/dist/cornerstoneTools.js"></script>
-  <script src="https://unpkg.com/cornerstone-wado-image-loader@4.1.5/dist/cornerstoneWADOImageLoader.bundle.min.js"></script>
-  <script src="https://unpkg.com/dicom-parser@1.8.13/dist/dicomParser.js"></script>
-  <script src="https://unpkg.com/cornerstone-math@0.1.10/dist/cornerstoneMath.min.js"></script>
-  <script type="text/javascript" src="https://unpkg.com/@babel/polyfill@7.0.0/dist/polyfill.js"></script>
-  <script type="text/javascript" src="https://unpkg.com/vtk.js"></script>
+  <script type="text/javascript" src="https://unpkg.com/@babel/polyfill@7.12.1/dist/polyfill.js"></script>
+  <script type="text/javascript" src="https://unpkg.com/vtk.js@30.3.1/vtk.js"></script>
 </head>
 <body>
-  <div class="title-bar">
-    nnU-Net
-  </div>
+  <div class="title-bar">E骨-综合医疗分析平台</div>
+
   <div id="rectangle">
-    <a href="../../shouye.html"><img  src="../assets/images/fanhui.png" alt="返回"></a>
-    <!-- 添加label标签，优化input标签样式 -->
-    <label for="fileInput">
-      <img id="icon" src="../assets/images/wenjianjia.png" alt="Icon 1">
-    </label>
-    <input type="file" id="fileInput" onchange="processFiles()" webkitdirectory directory multiple>
-    <img id="icon2" src="../assets/images/img_1.png" alt="Icon 2">
-    <img id="icon3" src="../assets/images/img_4.png" alt="Icon 3">
-    <img src="../assets/images/tuxiang-suoxiao-01.png" alt="Icon 4">
-    <img src="../assets/images/tuxiangfuwei.png" alt="Icon 5">
-    <img src="../assets/images/tuxiangpingyi.png" alt="Icon 6">
-    <!-- <img src="../assets/images/img_6.png" alt="Icon 7"> -->
-    <a href="./dading.html"><img id="icon4" src="../assets/images/img_7.png" alt="Icon 7"></a>
+    <a href="../../shouye.html" id="btn-back"><img src="../assets/images/fanhui.png" alt="返回" title="返回主页面"></a>
+    <img id="icon-open-folder" src="../assets/images/wenjianjia.png" alt="打开文件" title="打开NIfTI文件">
+    <img id="icon-segment" src="../assets/images/shenduxuexi.png" alt="分割" title="nnU-Net分割">
+    <img id="icon-pick" src="../assets/images/img_3.png" alt="选点" title="选点工具">
+    <div id="pick-sidebar">
+      <div class="sidebar-title">选点工具</div>
+      <button class="sidebar-btn" id="btn-pick-mode">选点</button>
+      <button class="sidebar-btn" id="btn-generate">生成</button>
+      <button class="sidebar-btn" id="btn-clear-points">清除</button>
+    </div>
+    <div id="customMenu1"><div id="clear1">清点</div></div>
+    <img id="icon-import" src="../assets/images/img_4.png" alt="导入" title="导入模型">
+    <div id="import-sidebar">
+      <div class="sidebar-title">导入模型</div>
+      <button class="sidebar-btn" id="btn-import-nail">导入钉子</button>
+      <button class="sidebar-btn" id="btn-import-guide">导入导板</button>
+      <button class="sidebar-btn" id="btn-import-base">导入基座</button>
+    </div>
+    <img id="icon-measure" src="../assets/images/img_5.png" alt="测距" title="测距工具">
+    <img id="icon-opacity" src="../assets/images/img_7.png" alt="透明度" title="透明度切换">
+    <img id="icon-hide-humerus" src="../assets/images/gutou.png" alt="隐藏肱骨" title="隐藏/显示肱骨" style="filter:brightness(1);cursor:pointer;">
+    <img id="icon-ai" src="../assets/images/AI.png" alt="术前规划智能分析助手" title="术前规划智能分析助手">
+    <img id="icon-clear-all" src="../assets/images/shuaxin.png" alt="清屏" title="清除全部，开始新的规划">
   </div>
+
   <div id="bottomRectangle">
-    <div id="enabledElement" >
-        <input type="range" id="imageSlider1"  value="0">
-    </div> 
-    
-      <div id="enabledElements">
-        <input type="range" id="imageSlider"  value="0">
+    <!-- 左侧：NIfTI查看器 -->
+    <div id="niftiViewer">
+      <div class="nifti-title">NIFIT显示器</div>
+      <div class="nifti-main">
+        <div class="nifti-canvas-wrap"><canvas id="niftiCanvas"></canvas></div>
       </div>
-      <div id="enabledElement2">
+      <div class="nifti-bottombar">
+        <button class="nifti-plane-btn" data-plane="axial" disabled>横截面</button>
+        <button class="nifti-plane-btn" data-plane="sagittal" disabled>矢状面</button>
+        <button class="nifti-plane-btn" data-plane="coronal" disabled>冠状面</button>
       </div>
-    
+    </div>
+    <!-- 中间：滑动条 -->
+    <div id="middleBar">
+      <input type="range" id="sliceSlider" min="0" max="1" value="0" orient="vertical">
+    </div>
+    <!-- 右侧：VTK 3D模型查看器 -->
+    <div id="vtkContainer">
+      <div class="vtk-label">3D骨模型重建</div>
+      <div class="vtk-main"></div>
+      <div class="vtk-bottombar"></div>
+    </div>
+    <!-- 参数面板 -->
+    <div id="paramPanel">
+    <div class="titlebar">参数</div>
+    <div class="datafont"><span class="datatext">入钉长度:</span><input type="number" class="data-box1" step="0.1" readonly></div>
+    <div class="datafont"><span class="datatext">上下倾角:</span><input type="number" class="data-box2" step="0.1" readonly></div>
+    <div class="datafont"><span class="datatext">左右倾角:</span><input type="number" class="data-box3" step="0.1" readonly></div>
+    <div class="datafont"><span class="datatext">两点距离:</span><div class="data-box-measure"></div></div>
+    <div id="adjustBtns" style="display:none; padding:4px 0;">
+      <button id="btn-set-center" class="param-btn">🎯 设置旋转中心</button>
+      <button id="btn-confirm-adjust" class="param-btn" disabled>✓ 确认并更新</button>
+      <button id="btn-save-regenerate" class="param-btn" disabled>⟳ 保存并重新生成</button>
+    </div>
+    <div class="bottombar">规划</div>
+    <div id="checkbox-container">
+      <label><input type="checkbox" id="cb-nail" onchange="toggleModel(this,'nail')"><span class="custom-checkbox">显示钉子</span></label>
+      <label><input type="checkbox" id="cb-guide" onchange="toggleModelGroup(this,'guide')"><span class="custom-checkbox">显示导板</span></label>
+      <label><input type="checkbox" id="cb-jizuo" onchange="toggleModel(this,'jizuo')"><span class="custom-checkbox">显示基座</span></label>
+    </div>
   </div>
-</body>
+  </div>
+
+  <div id="progressOverlay" style="display:none;">
+    <div class="progress-box">
+      <div class="progress-title">处理中</div>
+      <div class="progress-bar-outer"><div class="progress-bar-inner" id="progressBar"></div></div>
+      <div class="progress-text" id="progressText">准备中...</div>
+    </div>
+  </div>
+
+  <div id="statusBar"></div>
+
 <script>
-  // cornerstone初始化
-  cornerstoneTools.init({
-      touchEnabled: false,
-      showSVGCursors: false
-    }); 
-    cornerstoneTools.external.cornerstone = cornerstone;
-    cornerstoneTools.external.cornerstoneMath = cornerstoneMath;
+// ============================================================
+// 全局状态
+// ============================================================
+let currentDirPath = '';
+let currentNiftiPath = '';
+window._lastStlDir = ''; // 最近一次生成假体的保存目录
+let currentMode = 'nifti';
+let volume = null;
+let segVolume = null; // 分割结果体积
+let shape = null;
+let spacing = null;
+let activePlane = 'axial';
+let cur = { axial: 0, sagittal: 0, coronal: 0 };
+let paramPanelExpanded = false; // 参数面板是否已展开
 
-    cornerstoneWADOImageLoader.webWorkerManager.initialize({
-      maxWebWorkers: navigator.hardwareConcurrency || 1,
-      startWebWorkersOnDemand: true,
-      taskConfiguration: {
-        decodeTask: {
-          initializeCodecsOnStartup: false
-        }
-      },
-      webWorkerTaskPaths: [
-        "https://unpkg.com/cornerstone-wado-image-loader@4.1.5/dist/610.bundle.min.worker.js",
-      ]
-    });
-    cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
-    cornerstoneWADOImageLoader.external.dicomParser = dicomParser;
-    const element = document.getElementById("enabledElement");
-    cornerstone.enable(element);
-    const StackScrollTool = cornerstoneTools.StackScrollTool;
-    const StackScrollMouseWheelTool = cornerstoneTools.StackScrollMouseWheelTool;
-    let imageIds = [];
-    //隐藏控制条
-    window.onload = function() {
-      document.getElementById("imageSlider1").style.display = "none";
-    }
-    function processFiles() {
-      clearLoadedImages()
-      const fileInput = document.getElementById('fileInput');
-      fileInput.addEventListener('click', function(e){
-        enabledElement.style.display = "block";
-        enabledElements.style.display = "none";
-        enabledElement2.style.display = "none";
-        imageSlider.style.display = "none";
-      });
-      const files = fileInput.files;
+const niftiCanvas = document.getElementById('niftiCanvas');
+const niftiCtx = niftiCanvas.getContext('2d');
+const sliceSlider = document.getElementById('sliceSlider');
+const planeBtns = document.querySelectorAll('.nifti-plane-btn');
 
-    
-      const dcmFiles = [];
-      for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          if (file.type === 'application/dicom' || file.name.endsWith('.dcm')) {
-              dcmFiles.push(file);
-          }
-      }
-      console.log(dcmFiles);
-      for (let i = 0; i < dcmFiles.length; i++){
-          const file = dcmFiles[i];
-          const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
-          // console.log(imageId);
-          // 添加到imageIds数组中
-          imageIds.push(imageId);
-          loadAndDisplayImage(imageIds)
-      }
-      console.log(imageIds.length);
-      var slider1 = document.getElementById('imageSlider1');
-      slider1.value = currentIndex;
-      slider1.min = 0;
-      slider1.max = imageIds.length - 1;
-      //onchange事件触发后显示控制条
-      document.getElementById('imageSlider1').style.display = 'block';
-    }
-    //放入堆栈
-    function loadAndDisplayImage(imageIds) {
-      const stack = {
-        currentImageIdIndex: 0,
-        imageIds: imageIds
-      };
-      
-    cornerstone.loadImage(imageIds[0]).then((image) => {
-      cornerstone.displayImage(element, image);
-      cornerstoneTools.addStackStateManager(element, ['stack']);
-      cornerstoneTools.addToolState(element, 'stack', stack);
-      cornerstoneTools.addTool(StackScrollTool, {
-        configuration: {
-          loop: true,
-          allowSkipping: true
-        }
-      });
-      cornerstoneTools.addTool(StackScrollMouseWheelTool, {
-        configuration: {
-          loop: true,
-          allowSkipping: true,
-          invert: false
-        },
-      });
-      cornerstoneTools.setToolActive('StackScroll', { mouseButtonMask: 1 });
-      cornerstoneTools.setToolActive("StackScrollMouseWheel", { mouseButtonMask: 4 });
-    });
-   }
-   //导入scroll和scrollToIndex工具
-   const scroll = cornerstoneTools.importInternal("util/scroll");
-   const scrollToIndex = cornerstoneTools.importInternal("util/scrollToIndex");
-   // 监听鼠标滚轮事件
-   var currentIndex = 0;
-   scrollToIndex(element, currentIndex);
-  document.addEventListener('wheel', function(event) {
-    if(event.target.tagName.toLowerCase() === 'canvas'){
-      event.preventDefault();
-      
-      var delta = Math.sign(event.deltaY);
-      var newIndex = currentIndex + delta;
-      
-      // 边界值处理
-      if (newIndex < 0) {
-          newIndex = 0;
-      } else if (newIndex >= imageIds.length) {
-          newIndex = imageIds.length - 1;
-      }
-      currentIndex = newIndex;
-      var slider1 = document.getElementById('imageSlider1');
-      slider1.value = currentIndex;
-      // 显示新的图片
-      scrollToIndex(element, newIndex);}
-     
-  }, { passive: false });
- 
-  // 监听控制条变化
-  document.getElementById('imageSlider1').addEventListener('input', function(event) {
-      var newIndex = parseInt(event.target.value);
-      currentIndex = newIndex;
-      scrollToIndex(element, newIndex);
+// ============================================================
+// 加载体积数据（直接从 openNiftiFile 结果接收）
+// ============================================================
+function loadVolumeData(volData, volShape, volSpacing) {
+  volume = new Uint8Array(volData);
+  shape = volShape;
+  spacing = volSpacing;
+
+  // 启用视角按钮
+  planeBtns.forEach(btn => {
+    btn.disabled = false;
   });
-  function clearLoadedImages() {
-    // 清除影像
-    cornerstone.imageCache.purgeCache();
-    // 重置 imageIds 数组
-    imageIds = [];
-    // 重置 currentIndex
-    currentIndex = 0;
-    // 清除控制条
-    var slider1 = document.getElementById('imageSlider1');
-    slider1.value = 0;
-    slider1.min = 0;
-    slider1.max = 0;
-    // 隐藏控制条
-    slider1.style.display = 'none';
+
+  cur.axial = Math.floor(shape[2] / 2);
+  cur.sagittal = Math.floor(shape[0] / 2);
+  cur.coronal = Math.floor(shape[1] / 2);
+
+  switchPlane('axial');
+  showStatus(`已加载: ${shape[0]}x${shape[1]}x${shape[2]}, 间距: ${spacing.map(v=>v.toFixed(2)).join('x')}`);
 }
 
-
-</script>
-<script type="text/javascript">
-//鼠标点击后加载三维模型
-document.addEventListener('DOMContentLoaded', function () {
-    const icon2 = document.getElementById('icon2');
-    icon2.addEventListener('click', function (event) {
-    enabledElement.style.display = "none";
-    enabledElements.style.display = "block";
-    enabledElement2.style.display = "block";
-    imageSlider.style.display = "block";
-    // 获取包含所有图片的文件夹路径
-    var imageFolder = 'D:/program/ruanj/0012/output_slices/';
-    var imagePaths = [];
-    // 将图片路径存入数组
-    for (var i = 1; i <= 200; i++) {
-        var imagePath = imageFolder + 'slice_' + i + '.png';
-        imagePaths.push(imagePath);
+// ============================================================
+// 加载分割结果叠加层
+// ============================================================
+async function loadSegmentationOverlay(segNiftiPath) {
+  try {
+    console.log('加载分割结果:', segNiftiPath);
+    const seg = await window.electronapi.readNiftiDirect(segNiftiPath);
+    console.log('分割结果元数据:', seg.meta, '原始shape:', shape);
+    if (seg.meta.shape[0] === shape[0] && seg.meta.shape[1] === shape[1] && seg.meta.shape[2] === shape[2]) {
+      segVolume = new Uint8Array(seg.data);
+      renderCurrentSlice();
+      showStatus('分割标签已叠加显示');
+    } else {
+      console.warn('分割结果尺寸不匹配:', seg.meta.shape, 'vs', shape);
+      showStatus('分割结果尺寸不匹配，无法叠加');
     }
-    document.getElementById('imageSlider').min = 0;
-    document.getElementById('imageSlider').max = imagePaths.length - 1;
-    // 预加载图片
-    var images = [];
-    for (var i = imagePaths.length-1; i >= 0 ; i--) {
-        var img = new Image();
-        img.src = imagePaths[i];
-        images.push(img);
-        document.getElementById('enabledElements').appendChild(img); // 将图像添加到容器中
-    }
-    // 显示图片
-    var imageContainer = document.getElementById('enabledElements');
-    var currentIndex = 0;
+  } catch (e) {
+    console.error('加载分割结果失败:', e);
+    showStatus('分割结果加载失败');
+  }
+}
 
-    function showImage(index) {
-        if (index < 0 || index >= images.length) {
-            return;
-        }
+// ============================================================
+// 切换平面（参考 ACL 的 button_plane_clicked）
+// ============================================================
+function switchPlane(plane) {
+  activePlane = plane;
+  const maxIdx = getMaxIdx(plane);
 
-        // 隐藏所有图片
-        for (var i = 0; i < images.length; i++) {
-            images[i].style.display = 'none';
-        }
-
-        // 显示当前图片
-        images[index].style.display = 'block';
-        currentIndex = index;
-        document.getElementById('imageSlider').value = index;
-    }
-    // 初始显示第一张图片
-    showImage(currentIndex);
-    // 监听鼠标滚轮事件
-    document.addEventListener('wheel', function(event) {
-      //检查鼠标是否在图片上以此来监听滚轮效果
-      if(event.target.tagName.toLowerCase() === 'img'){
-        event.preventDefault();
-
-        var delta = Math.sign(event.deltaY);
-        var newIndex = currentIndex + delta;
-
-        // 边界值处理
-        if (newIndex < 0) {
-            newIndex = 0;
-        } else if (newIndex >= images.length) {
-            newIndex = images.length - 1;
-        }
-
-        // 显示新的图片
-        showImage(newIndex);}
-    }, { passive: false });
-    // 监听控制条变化
-    document.getElementById('imageSlider').addEventListener('input', function(event) {
-        var newIndex = parseInt(event.target.value);
-        showImage(newIndex);
-    });
-    //清除img标签
-    function clear(){
-
-        var imageContainer = document.getElementById('enabledElements');
-        var imgs = imageContainer.querySelectorAll('img');
-        imgs.forEach(function(img) {
-            imageContainer.removeChild(img);
-          });
-        images=[],
-        currentIndex=0;
-    }
-    //点击后清除
-    document.getElementById('icon').addEventListener('click', function (event) {
-        clear();
-    })
-
-
-
-
-
-
-      //vtk初始   
-    const container = document.getElementById('enabledElement2');
-    var fullScreenRenderer = vtk.Rendering.Misc.vtkFullScreenRenderWindow.newInstance({ rootContainer: container });
-    var actor              = vtk.Rendering.Core.vtkActor.newInstance();
-    var mapper             = vtk.Rendering.Core.vtkMapper.newInstance();
-    var cone               = vtk.Filters.Sources.vtkConeSource.newInstance();
-    var reader             = vtk.IO.Geometry.vtkSTLReader.newInstance()
-    //文件地址
-    const stlFilePaths = [
-
-    ];
-    //读取目标文件
-    reader.setUrl().then(() => {
-                // 获取读取器的输出数据
-                const stlOutput = reader.getOutputData();
-
-                // 创建一个 STL 模型的映射器
-                var mapper1             = vtk.Rendering.Core.vtkMapper.newInstance();
-                mapper1.setInputData(stlOutput);
-
-                // 创建一个 STL 模型的演员
-                var actor1             = vtk.Rendering.Core.vtkActor.newInstance();
-                actor1.setMapper(mapper1);
-                //3.6 上午修改
-                document.getElementById("icon3").addEventListener("click", function() {
-                // 将演员添加到渲染窗口中
-                fullScreenRenderer.getRenderer().addActor(actor1);
-                fullScreenRenderer.getRenderer().setBackground(0, 0, 0)
-                // 重新调整相机以适应所有演员
-                fullScreenRenderer.getRenderer().resetCamera();
-                // 渲染
-                fullScreenRenderer.getRenderWindow().render();
-            });
-
-                // 将演员添加到渲染窗口中
-                // fullScreenRenderer.getRenderer().addActor(actor1);
-                // fullScreenRenderer.getRenderer().resetCamera();
-                // fullScreenRenderer.getRenderWindow().render();
-            });
-    reader.setUrl().then(() => {
-                // 获取读取器的输出数据
-                const stlOutput = reader.getOutputData();
-
-                // 创建一个 STL 模型的映射器
-                var mapper2            = vtk.Rendering.Core.vtkMapper.newInstance();
-                mapper2.setInputData(stlOutput);
-
-                // 创建一个 STL 模型的演员
-                var actor2              = vtk.Rendering.Core.vtkActor.newInstance();
-                actor2.setMapper(mapper2);
-
-                // 将演员添加到渲染窗口中
-                fullScreenRenderer.getRenderer().addActor(actor2);
-                fullScreenRenderer.getRenderer().setBackground(0, 0, 0)
-                fullScreenRenderer.getRenderer().resetCamera();
-                fullScreenRenderer.getRenderWindow().render();
-            });
-    reader.setUrl( ).then(() => {
-                // 获取读取器的输出数据
-                const stlOutput = reader.getOutputData();
-
-                // 创建一个 STL 模型的映射器
-                var mapper3            = vtk.Rendering.Core.vtkMapper.newInstance();
-                mapper3.setInputData(stlOutput);
-
-                // 创建一个 STL 模型的演员
-                var actor3              = vtk.Rendering.Core.vtkActor.newInstance();
-                actor3.setMapper(mapper3);
-                document.getElementById("icon3").addEventListener("click", function() {
-                // 将演员添加到渲染窗口中
-                fullScreenRenderer.getRenderer().addActor(actor3);
-                fullScreenRenderer.getRenderer().setBackground(0, 0, 0)
-                // 重新调整相机以适应所有演员
-                fullScreenRenderer.getRenderer().resetCamera();
-                // 渲染
-                fullScreenRenderer.getRenderWindow().render();
-            });
-                // 将演员添加到渲染窗口中
-                // fullScreenRenderer.getRenderer().addActor(actor3);
-                // fullScreenRenderer.getRenderer().resetCamera();
-                // fullScreenRenderer.getRenderWindow().render();
-            });
-    reader.setUrl( ).then(() => {
-                // 获取读取器的输出数据
-                const stlOutput = reader.getOutputData();
-
-                // 创建一个 STL 模型的映射器
-                var mapper4            = vtk.Rendering.Core.vtkMapper.newInstance();
-                mapper4.setInputData(stlOutput);
-
-                // 创建一个 STL 模型的演员
-                var actor4              = vtk.Rendering.Core.vtkActor.newInstance();
-                actor4.setMapper(mapper4);
-                document.getElementById("icon3").addEventListener("click", function() {
-                // 将演员添加到渲染窗口中
-                fullScreenRenderer.getRenderer().addActor(actor4);
-                fullScreenRenderer.getRenderer().setBackground(0, 0, 0)
-                // 重新调整相机以适应所有演员
-                fullScreenRenderer.getRenderer().resetCamera();
-                // 渲染
-                fullScreenRenderer.getRenderWindow().render();
-            });
-                // // 将演员添加到渲染窗口中
-                // fullScreenRenderer.getRenderer().addActor(actor4);
-                // fullScreenRenderer.getRenderer().resetCamera();
-                // fullScreenRenderer.getRenderWindow().render();
-            });
-    reader.setUrl( ).then(() => {
-                // 获取读取器的输出数据
-                const stlOutput = reader.getOutputData();
-
-                // 创建一个 STL 模型的映射器
-                var mapper5            = vtk.Rendering.Core.vtkMapper.newInstance();
-                mapper5.setInputData(stlOutput);
-
-                // 创建一个 STL 模型的演员
-                var actor5              = vtk.Rendering.Core.vtkActor.newInstance();
-                actor5.setMapper(mapper5);
-                document.getElementById("icon3").addEventListener("click", function() {
-                // 将演员添加到渲染窗口中
-                fullScreenRenderer.getRenderer().addActor(actor5);
-                fullScreenRenderer.getRenderer().setBackground(0, 0, 0)
-                // 重新调整相机以适应所有演员
-                fullScreenRenderer.getRenderer().resetCamera();
-                // 渲染
-                fullScreenRenderer.getRenderWindow().render();
-            });
-                // 将演员添加到渲染窗口中
-                // fullScreenRenderer.getRenderer().addActor(actor5);
-                // fullScreenRenderer.getRenderer().resetCamera();
-                // fullScreenRenderer.getRenderWindow().render();
-            });
-      
-    });
+  // 更新按钮样式
+  planeBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.plane === plane);
   });
-     
+
+  // 重置到中间切片
+  cur[plane] = Math.floor(maxIdx / 2);
+
+  // 更新滑块
+  sliceSlider.min = 0;
+  sliceSlider.max = maxIdx - 1;
+  sliceSlider.value = cur[plane];
+
+  renderCurrentSlice();
+}
+
+function getMaxIdx(plane) {
+  if (plane === 'axial') return shape[2];
+  if (plane === 'sagittal') return shape[0];
+  return shape[1];
+}
+
+// ============================================================
+// 渲染当前切片（严格按 ACL show_plane 逻辑）
+// nibabel shape=(X,Y,Z), volume[a,b,c] = a*Y*Z + b*Z + c
+// ACL: sagittal=data[x,:,:] coronal=data[:,y,:] axial=data[:,:,z]
+// ACL后处理: axial=rot90x3+flip, coronal=flip, sagittal=flip
+// ============================================================
+function renderCurrentSlice() {
+  if (!volume || !shape) return;
+  niftiCanvas.parentElement.style.background = '#000';
+  const plane = activePlane;
+  const idx = cur[plane];
+  const X = shape[0], Y = shape[1], Z = shape[2];
+  const hasSeg = segVolume && segVolume.length === volume.length;
+
+  let w, h;
+
+  if (plane === 'axial') {
+    w = Y; h = X;
+    niftiCanvas.width = w;
+    niftiCanvas.height = h;
+    const imgData = niftiCtx.createImageData(w, h);
+    const px = imgData.data;
+    for (let row = 0; row < h; row++) {
+      for (let col = 0; col < w; col++) {
+        const vi = col * Y * Z + row * Z + idx;
+        const pi = (row * w + col) * 4;
+        const g = volume[vi];
+        if (hasSeg && segVolume[vi] > 0) {
+          const s = segVolume[vi];
+          px[pi]   = s === 1 ? Math.floor(g*0.5+102) : Math.floor(g*0.7);
+          px[pi+1] = s === 2 ? Math.floor(g*0.5+102) : Math.floor(g*0.7);
+          px[pi+2] = Math.floor(g*0.7);
+        } else {
+          px[pi] = px[pi+1] = px[pi+2] = g;
+        }
+        px[pi+3] = 255;
+      }
+    }
+    niftiCtx.putImageData(imgData, 0, 0);
+  }
+  else if (plane === 'coronal') {
+    w = X; h = Z;
+    niftiCanvas.width = w;
+    niftiCanvas.height = h;
+    const imgData = niftiCtx.createImageData(w, h);
+    const px = imgData.data;
+    for (let row = 0; row < h; row++) {
+      for (let col = 0; col < w; col++) {
+        const vi = col * Y * Z + idx * Z + (Z - 1 - row);
+        const pi = (row * w + col) * 4;
+        const g = volume[vi];
+        if (hasSeg && segVolume[vi] > 0) {
+          const s = segVolume[vi];
+          px[pi]   = s === 1 ? Math.floor(g*0.5+102) : Math.floor(g*0.7);
+          px[pi+1] = s === 2 ? Math.floor(g*0.5+102) : Math.floor(g*0.7);
+          px[pi+2] = Math.floor(g*0.7);
+        } else {
+          px[pi] = px[pi+1] = px[pi+2] = g;
+        }
+        px[pi+3] = 255;
+      }
+    }
+    niftiCtx.putImageData(imgData, 0, 0);
+  }
+  else {
+    w = Y; h = Z;
+    niftiCanvas.width = w;
+    niftiCanvas.height = h;
+    const imgData = niftiCtx.createImageData(w, h);
+    const px = imgData.data;
+    for (let row = 0; row < h; row++) {
+      for (let col = 0; col < w; col++) {
+        const vi = idx * Y * Z + col * Z + (Z - 1 - row);
+        const pi = (row * w + col) * 4;
+        const g = volume[vi];
+        if (hasSeg && segVolume[vi] > 0) {
+          const s = segVolume[vi];
+          px[pi]   = s === 1 ? Math.floor(g*0.5+102) : Math.floor(g*0.7);
+          px[pi+1] = s === 2 ? Math.floor(g*0.5+102) : Math.floor(g*0.7);
+          px[pi+2] = Math.floor(g*0.7);
+        } else {
+          px[pi] = px[pi+1] = px[pi+2] = g;
+        }
+        px[pi+3] = 255;
+      }
+    }
+    niftiCtx.putImageData(imgData, 0, 0);
+  }
+
+  // 按 spacing 校正物理比例，确保显示不变形
+  // nibabel spacing=(dx,dy,dz) 对应 shape=(X,Y,Z)
+  const sp = spacing || [1, 1, 1];
+  let physW, physH;
+  if (plane === 'axial')      { physW = w * sp[1]; physH = h * sp[0]; }  // Y*dy vs X*dx
+  else if (plane === 'coronal') { physW = w * sp[0]; physH = h * sp[2]; }  // X*dx vs Z*dz
+  else                          { physW = w * sp[1]; physH = h * sp[2]; }  // Y*dy vs Z*dz
+  const ratio = physW / physH;
+
+  // 先重置 canvas 显示尺寸，确保 wrap.clientWidth/Height 不受 canvas 内容影响
+  niftiCanvas.style.width = '0px';
+  niftiCanvas.style.height = '0px';
+  const wrap = niftiCanvas.parentElement;
+  const maxW = wrap.clientWidth || 300;
+  const maxH = wrap.clientHeight || 300;
+  let dispW, dispH;
+  if (maxW / maxH > ratio) {
+    dispH = maxH;
+    dispW = Math.round(maxH * ratio);
+  } else {
+    dispW = maxW;
+    dispH = Math.round(maxW / ratio);
+  }
+  console.log(`[resize] plane=${plane} canvas=${w}x${h} spacing=[${sp.map(v=>v.toFixed(2))}] physRatio=${ratio.toFixed(3)} wrap=${maxW}x${maxH} disp=${dispW}x${dispH}`);
+  niftiCanvas.style.width = dispW + 'px';
+  niftiCanvas.style.height = dispH + 'px';
+}
+
+// 底部按钮切换平面
+planeBtns.forEach(btn => {
+  btn.addEventListener('click', () => switchPlane(btn.dataset.plane));
+});
+
+// 滑块
+sliceSlider.addEventListener('input', () => {
+  cur[activePlane] = parseInt(sliceSlider.value);
+  renderCurrentSlice();
+});
+
+// 滚轮切片（方向与鼠标一致）
+document.getElementById('niftiViewer').addEventListener('wheel', function(e) {
+  if (!volume) return;
+  e.preventDefault();
+  const maxIdx = getMaxIdx(activePlane);
+  cur[activePlane] = Math.max(0, Math.min(cur[activePlane] + Math.sign(e.deltaY), maxIdx - 1));
+  sliceSlider.value = cur[activePlane];
+  renderCurrentSlice();
+}, { passive: false });
+
+// ============================================================
+// 打开NIfTI（Python读取nii.gz → 写入raw → 前端读取）
+// ============================================================
+document.getElementById("icon-open-folder").addEventListener("click", async function() {
+  try {
+    showProgress('加载中...', 0);
+    window.electronapi.onConversionProgress(d => updateProgress(d.progress, ''));
+    const result = await window.electronapi.openNiftiFile();
+    hideProgress();
+    if (!result.canceled && result.rawDir) {
+      switchToNiftiMode();
+      currentDirPath = result.niftiDir;
+      currentNiftiPath = result.niftiPath || '';
+      // 从 rawDir 读取已转换的体积数据
+      const vol = await window.electronapi.readRawVolume(result.rawDir);
+      loadVolumeData(vol.data, vol.meta.shape, vol.meta.spacing);
+    }
+  } catch (e) {
+    showStatus('打开失败: ' + e.message);
+    hideProgress();
+  }
+});
+
+// ============================================================
+// 模式切换
+// ============================================================
+const niftiViewer = document.getElementById("niftiViewer");
+const vtkContainer = document.getElementById("vtkContainer");
+
+function switchToNiftiMode() {
+  currentMode = 'nifti';
+}
+function switchToVtkMode() {
+  currentMode = 'vtk';
+  initVtk();
+}
+
+// ============================================================
+// VTK 3D
+// ============================================================
+let fullScreenRenderer, renderWindow, renderer, vtkPicker, vtkPointPicker;
+function initVtk() {
+  if (fullScreenRenderer) return;
+  const vtkMain = vtkContainer.querySelector('.vtk-main');
+  fullScreenRenderer = vtk.Rendering.Misc.vtkFullScreenRenderWindow.newInstance({ rootContainer: vtkMain, background: [0,0,0] });
+  renderWindow = fullScreenRenderer.getRenderWindow();
+  renderer = fullScreenRenderer.getRenderer();
+  vtkPicker = vtk.Rendering.Core.vtkCellPicker.newInstance();
+  vtkPicker.setPickFromList(1); vtkPicker.initializePickList();
+  vtkPicker.setTolerance(0.025);
+  vtkPointPicker = vtk.Rendering.Core.vtkPointPicker.newInstance();
+  vtkPointPicker.setPickFromList(1); vtkPointPicker.initializePickList();
+  const c = vtkMain.querySelector('canvas');
+  if (c) { c.style.width='100%'; c.style.height='100%'; c.style.display='block'; }
+  new ResizeObserver(()=>{if(renderWindow)renderWindow.render();}).observe(vtkMain);
+}
+
+function closestPointOnTriangle(p, a, b, c) {
+  const ab=[b[0]-a[0],b[1]-a[1],b[2]-a[2]];
+  const ac=[c[0]-a[0],c[1]-a[1],c[2]-a[2]];
+  const ap=[p[0]-a[0],p[1]-a[1],p[2]-a[2]];
+  const d1=ab[0]*ap[0]+ab[1]*ap[1]+ab[2]*ap[2];
+  const d2=ac[0]*ap[0]+ac[1]*ap[1]+ac[2]*ap[2];
+  if(d1<=0&&d2<=0)return a;
+  const bp=[p[0]-b[0],p[1]-b[1],p[2]-b[2]];
+  const d3=ab[0]*bp[0]+ab[1]*bp[1]+ab[2]*bp[2];
+  const d4=ac[0]*bp[0]+ac[1]*bp[1]+ac[2]*bp[2];
+  if(d3>=0&&d4<=d3)return b;
+  const vc=d1*d4-d3*d2;
+  if(vc<=0&&d1>=0&&d3<=0){const v=d1/(d1-d3);return[a[0]+v*ab[0],a[1]+v*ab[1],a[2]+v*ab[2]];}
+  const cp=[p[0]-c[0],p[1]-c[1],p[2]-c[2]];
+  const d5=ab[0]*cp[0]+ab[1]*cp[1]+ab[2]*cp[2];
+  const d6=ac[0]*cp[0]+ac[1]*cp[1]+ac[2]*cp[2];
+  if(d6>=0&&d5<=d6)return c;
+  const vb=d5*d2-d1*d6;
+  if(vb<=0&&d2>=0&&d6<=0){const w=d2/(d2-d6);return[a[0]+w*ac[0],a[1]+w*ac[1],a[2]+w*ac[2]];}
+  const va=d3*d6-d5*d4;
+  if(va<=0&&(d4-d3)>=0&&(d5-d6)>=0){const w=(d4-d3)/((d4-d3)+(d5-d6));return[b[0]+w*(c[0]-b[0]),b[1]+w*(c[1]-b[1]),b[2]+w*(c[2]-b[2])];}
+  const denom=1.0/(va+vb+vc);const v=vb*denom;const w=vc*denom;
+  return[a[0]+ab[0]*v+ac[0]*w,a[1]+ab[1]*v+ac[1]*w,a[2]+ab[2]*v+ac[2]*w];
+}
+
+function snapToMeshSurface(point, polyData) {
+  if (!polyData || !point) return point;
+  const pts = polyData.getPoints();
+  const cells = polyData.getPolys();
+  if (!pts || !cells) return point;
+  const nCells = cells.getNumberOfCells();
+  if (nCells === 0) return point;
+  let minDist = Infinity;
+  let closest = null;
+  const cellData = cells.getData();
+  let idx = 0;
+  for (let i = 0; i < nCells; i++) {
+    const nVerts = cellData[idx++];
+    if (nVerts < 3) { idx += nVerts; continue; }
+    const a = pts.getPoint(cellData[idx]);
+    const b = pts.getPoint(cellData[idx+1]);
+    const c = pts.getPoint(cellData[idx+2]);
+    idx += nVerts;
+    const cp = closestPointOnTriangle(point, a, b, c);
+    const dx=cp[0]-point[0], dy=cp[1]-point[1], dz=cp[2]-point[2];
+    const dist = dx*dx + dy*dy + dz*dz;
+    if (dist < minDist) { minDist = dist; closest = cp; }
+  }
+  return closest || point;
+}
+
+function pickWithFallback(screenPos) {
+  vtkPicker.pick(screenPos, renderer);
+  const cellId = typeof vtkPicker.getCellId === 'function' ? vtkPicker.getCellId() : 'N/A';
+  const actors = vtkPicker.getActors();
+  const pp = vtkPicker.getPickedPositions();
+  console.log('[取点调试] CellPicker cellId:', cellId, 'actors:', actors.length, 'positions:', pp.length, 'hasGetCellId:', typeof vtkPicker.getCellId);
+  if (actors.length > 0 && pp.length > 0) {
+    for (let i = 0; i < actors.length; i++) {
+      const a = actors[i];
+      const entry = Object.entries(modelManager.models).find(([,m]) => m.actor === a);
+      const isVisible = entry && modelManager.isVisible(entry[0]);
+      console.log('[取点调试] CellPicker actor:', entry?entry[0]:'unknown', 'isVisible:', isVisible);
+      if (entry && isVisible) {
+        return { point: pp[i] || pp[0], actor: a, method: 'CellPicker' };
+      }
+    }
+  }
+  console.log('[取点调试] CellPicker未命中可见模型，回退PointPicker');
+  vtkPointPicker.pick(screenPos, renderer);
+  const pActors = vtkPointPicker.getActors();
+  const ppp = vtkPointPicker.getPickedPositions();
+  console.log('[取点调试] PointPicker actors:', pActors.length, 'positions:', ppp.length);
+  if (pActors.length > 0 && ppp.length > 0) {
+    for (let i = 0; i < pActors.length; i++) {
+      const a = pActors[i];
+      const entry = Object.entries(modelManager.models).find(([,m]) => m.actor === a);
+      const isVisible = entry && modelManager.isVisible(entry[0]);
+      console.log('[取点调试] PointPicker actor:', entry?entry[0]:'unknown', 'isVisible:', isVisible);
+      if (entry && isVisible) {
+        return { point: ppp[i] || ppp[0], actor: a, method: 'PointPicker' };
+      }
+    }
+  }
+  return { point: null, actor: null, method: 'none' };
+}
+
+// ============================================================
+// 模型管理器
+// ============================================================
+class ModelManager {
+  constructor() { this.models={}; this.actors={}; this.isLoading=false; }
+  async loadModel(name, filePath, visible=true, forceReload=false) {
+    if (this.models[name] && !forceReload) { if(visible) this.showModel(name); return this.models[name].actor; }
+    // 强制重新加载：先移除旧模型
+    if (forceReload && this.models[name]) {
+      const old = this.models[name];
+      if (old.actor) {
+        renderer.removeActor(old.actor);
+        try { vtkPicker.removePickList(old.actor); } catch(e) {}
+        if (vtkPointPicker) try { vtkPointPicker.removePickList(old.actor); } catch(e) {}
+      }
+      delete this.models[name];
+      delete this.actors[name];
+    }
+    if (this.isLoading) { showStatus('加载中...'); return null; }
+    this.isLoading = true;
+    try {
+      let buf = window.electronapi ? await window.electronapi.readStlFile(filePath) : await (await fetch(filePath)).arrayBuffer();
+      const reader = vtk.IO.Geometry.vtkSTLReader.newInstance(); reader.parseAsArrayBuffer(buf);
+      const data = reader.getOutputData();
+      const mapper = vtk.Rendering.Core.vtkMapper.newInstance(); mapper.setInputData(data);
+      const actor = vtk.Rendering.Core.vtkActor.newInstance(); actor.setMapper(mapper);
+      this.models[name] = {actor,mapper,data,url:filePath,visible}; this.actors[name]=actor;
+      const nb=data.getNumberOfPoints?data.getNumberOfPoints():0;
+      const b=data.getBounds?data.getBounds():[];
+      console.log('[模型加载] '+name+' 点数:'+nb+' bounds:['+b.map(v=>v.toFixed(2)).join(', ')+']');
+      if(visible){renderer.addActor(actor);vtkPicker.addPickList(actor);if(vtkPointPicker)vtkPointPicker.addPickList(actor);renderer.resetCamera();renderWindow.render();}
+      return actor;
+    } catch(e){return null;} finally{this.isLoading=false;}
+  }
+  _resolveName(n){return this.models[n]?n:(n==='nail'&&this.models['nail1']?'nail1':n);}
+  showModel(n){n=this._resolveName(n);const m=this.models[n];if(m){m.visible=true;renderer.addActor(m.actor);this._rebuildPickList();renderWindow.render();}}
+  hideModel(n){n=this._resolveName(n);const m=this.models[n];if(m){m.visible=false;renderer.removeActor(m.actor);this._rebuildPickList();renderWindow.render();}}
+  _rebuildPickList(){vtkPicker.initializePickList();if(vtkPointPicker)vtkPointPicker.initializePickList();Object.values(this.models).forEach(m=>{if(m.visible!==false){vtkPicker.addPickList(m.actor);if(vtkPointPicker)vtkPointPicker.addPickList(m.actor);}});}
+  isVisible(n){n=this._resolveName(n);const m=this.models[n];return m?m.visible!==false:false;}
+  resetCamera(){renderer.resetCamera();renderWindow.render();}
+  setAllOpacity(o){Object.values(this.models).forEach(m=>m.actor.getProperty().setOpacity(o));renderWindow.render();}
+}
+const modelManager = new ModelManager();
+window.toggleModel=(cb,n)=>{if(cb.checked)modelManager.showModel(n);else modelManager.hideModel(n);};
+window.toggleModelGroup=(cb,g)=>{if(g==='guide'){if(cb.checked){modelManager.showModel('guide');modelManager.showModel('handle');}else{modelManager.hideModel('guide');modelManager.hideModel('handle');}}};
+
+let isTransparent=false;
+document.getElementById("icon-opacity").addEventListener("click",function(){
+  isTransparent=!isTransparent;
+  const op=isTransparent?0.3:1.0;
+  ['scapula','humerus'].forEach(n=>{const m=modelManager.models[n];if(m)m.actor.getProperty().setOpacity(op);});
+  renderWindow.render();
+  this.style.filter=isTransparent?'brightness(0.5)':'brightness(1)';
+});
+
+// ============================================================
+// nnU-Net分割
+// ============================================================
+let isInferring=false;
+document.getElementById("icon-segment").addEventListener("click",async function(){
+  if(isInferring){showStatus('推理中...');return;}
+  if(!currentDirPath){showStatus('请先打开NIfTI文件');return;}
+
+  // 分割结果保存到当前文件夹，STL 保存到 savestl
+  const segFolder=currentDirPath;
+  const stlFolder='savestl';
+  let useExisting=false;
+  try{
+    const existing=await window.electronapi.checkExistingSegmentation(currentDirPath);
+    if(existing.exists){
+      const fileName=existing.path.replace(/\\/g,'/').split('/').pop();
+      useExisting=confirm('发现已有分割结果: '+fileName+'\n是否直接使用？\n\n点击"确定"使用已有结果\n点击"取消"重新推理');
+      if(useExisting){
+        loadSegmentationOverlay(existing.path);
+        switchToVtkMode();
+        startStlConversion(existing.path,stlFolder);
+        return;
+      }
+    }
+  }catch(e){}
+
+  // 执行推理
+  switchToVtkMode();
+  showProgress('nnU-Net推理',0);
+  window.electronapi.onInferenceProgress(d=>{
+    updateProgress(d.progress,d.message);
+    if(d.progress>=100){try{const r=JSON.parse(d.message);if(r.output){hideProgress();loadSegmentationOverlay(r.output);startStlConversion(r.output,stlFolder);}}catch(e){}}
+  });
+  isInferring=true;
+  try{await window.electronapi.runInference(currentDirPath,segFolder);}catch(e){showStatus('推理失败');hideProgress();}
+  isInferring=false;
+});
+async function startStlConversion(niftiPath,outputFolder){
+  // 骨骼 STL 输出到 NIfTI 所在目录（如 0012/）
+  const stlDir=currentDirPath;
+  // 检查是否已有STL文件，如果有直接重建，没有则后台转换后重建
+  try{
+    const existing=await window.electronapi.checkExistingStl(stlDir);
+    if(existing.exists){
+      loadMesh(stlDir);
+      return;
+    }
+  }catch(e){}
+  // 执行转换（stlPath 仅用于传递目录，不生成 mesh.stl）
+  showProgress('NIfTI转STL',0);
+  window.electronapi.onConversionProgress(d=>{updateProgress(d.progress,d.message);if(d.progress>=100){hideProgress();loadMesh(stlDir);}});
+  try{await window.electronapi.convertNiftiToStl(niftiPath,stlDir+'/mesh.stl',0);}catch(e){showStatus('转换失败');hideProgress();}
+}
+async function loadMesh(dir){
+  const d=dir.replace(/\\/g,'/');
+  // 加载肩胛骨
+  try{await modelManager.loadModel('scapula',d+'/Scapula.stl',true);}catch(e){}
+  // 加载肱骨
+  try{await modelManager.loadModel('humerus',d+'/Humerus.stl',true);}catch(e){}
+  modelManager.resetCamera();
+  // 激活黑色画布背景
+  const vtkMain=vtkContainer.querySelector('.vtk-main');
+  if(vtkMain)vtkMain.classList.add('active');
+  showStatus('骨骼模型已加载');
+  humerusVisible=true;
+  document.getElementById('icon-hide-humerus').style.filter='brightness(1)';
+}
+// 肱骨显隐切换
+let humerusVisible=true;
+document.getElementById('icon-hide-humerus').addEventListener('click',function(){
+  if(!modelManager.models['humerus']){showStatus('请先加载模型');return;}
+  humerusVisible=!humerusVisible;
+  if(humerusVisible){modelManager.showModel('humerus');}else{modelManager.hideModel('humerus');}
+  this.style.filter=humerusVisible?'brightness(1)':'brightness(0.4)';
+  showStatus(humerusVisible?'肱骨已显示':'肱骨已隐藏');
+});
+
+// ============================================================
+// 导入模型
+// ============================================================
+const importSidebar=document.getElementById("import-sidebar");
+const importBtn=document.getElementById("icon-import");
+let importTimer=null;
+importBtn.addEventListener("click",function(){clearTimeout(importTimer);const r=importBtn.getBoundingClientRect();importSidebar.style.top=r.top+"px";importSidebar.style.left=(r.right+5)+"px";importSidebar.style.display="flex";});
+importSidebar.addEventListener("mouseenter",()=>clearTimeout(importTimer));
+importSidebar.addEventListener("mouseleave",()=>importTimer=setTimeout(()=>importSidebar.style.display="none",300));
+importBtn.addEventListener("mouseleave",()=>importTimer=setTimeout(()=>importSidebar.style.display="none",300));
+document.getElementById("btn-import-nail").addEventListener("click",async()=>{importSidebar.style.display="none";switchToVtkMode();const r=await window.electronapi.openStlFile();if(!r.canceled&&r.filePaths.length){const d=r.filePaths[0].substring(0,r.filePaths[0].lastIndexOf('\\'));await loadStl(r,'nail');document.getElementById("cb-nail").checked=true;showParamPanel(d);}});
+document.getElementById("btn-import-guide").addEventListener("click",async()=>{importSidebar.style.display="none";switchToVtkMode();const r=await window.electronapi.openStlFile();if(!r.canceled&&r.filePaths.length){const d=r.filePaths[0].substring(0,r.filePaths[0].lastIndexOf('\\'));await loadStl(r,'guide');try{await modelManager.loadModel('handle',d+'\\handle.stl',true);}catch(e){}document.getElementById("cb-guide").checked=true;}});
+document.getElementById("btn-import-base").addEventListener("click",async()=>{importSidebar.style.display="none";switchToVtkMode();const r=await window.electronapi.openStlFile();if(!r.canceled&&r.filePaths.length){await loadStl(r,'jizuo');document.getElementById("cb-jizuo").checked=true;}});
+async function loadStl(result,name){
+  if(result.fileData){const reader=vtk.IO.Geometry.vtkSTLReader.newInstance();reader.parseAsArrayBuffer(result.fileData);const data=reader.getOutputData();const mapper=vtk.Rendering.Core.vtkMapper.newInstance();mapper.setInputData(data);const actor=vtk.Rendering.Core.vtkActor.newInstance();actor.setMapper(mapper);modelManager.models[name]={actor,mapper,data,url:result.filePaths[0],visible:true};modelManager.actors[name]=actor;renderer.addActor(actor);vtkPicker.addPickList(actor);if(vtkPointPicker)vtkPointPicker.addPickList(actor);renderer.resetCamera();renderWindow.render();}
+}
+async function showParamPanel(dirPath){try{const c=await window.electronapi.readConfig(dirPath);if(c&&c.location1){document.querySelector('.data-box1').value=parseFloat(c.location1).toFixed(2);document.querySelector('.data-box2').value=parseFloat(c.location2).toFixed(2);document.querySelector('.data-box3').value=parseFloat(c.location3).toFixed(2);}}catch(e){}document.getElementById("paramPanel").style.display='flex';document.getElementById("adjustBtns").style.display='block';if(!paramPanelExpanded){try{await window.electronapi.resizeWindow(250);}catch(e){}paramPanelExpanded=true;}}
+
+// ============================================================
+// 选点
+// ============================================================
+class PointPicker{
+  constructor(){this.points=[];this.actors=[];this.isActive=false;this.maxPoints=3;this.sub=null;}
+  isModelActor(actor){return Object.values(modelManager.models).some(m=>m.actor===actor);}
+  activate(){if(this.isActive)return;this.isActive=true;this.points=[];this.clearActors();
+    this.sub=renderWindow.getInteractor().onRightButtonPress(cd=>{if(renderer!==cd.pokedRenderer)return;
+    const screenPos=[cd.position.x,cd.position.y,0.0];
+    const result=pickWithFallback(screenPos);
+    console.log('[取点调试] 拾取方式:', result.method);
+    if(!result.point){console.warn('[取点调试] 未能命中骨骼');return;}
+    let finalPoint=result.point;
+    if(result.actor&&result.actor.getMapper()){
+      const polyData=result.actor.getMapper().getInputData();
+      if(polyData){
+        const nCells=polyData.getPolys()?polyData.getPolys().getNumberOfCells():0;
+        const nPts=polyData.getPoints()?polyData.getPoints().getNumberOfPoints():0;
+        console.log('[取点调试] polyData 点数:',nPts,'面数:',nCells);
+        const snapped=snapToMeshSurface(result.point,polyData);
+        const dx=snapped[0]-result.point[0],dy=snapped[1]-result.point[1],dz=snapped[2]-result.point[2];
+        const offset=Math.sqrt(dx*dx+dy*dy+dz*dz);
+        console.log('[取点调试] 表面吸附偏移:',offset.toFixed(4),'原:',result.point.map(v=>v.toFixed(2)).join(','),'吸附后:',snapped.map(v=>v.toFixed(2)).join(','));
+        if(offset<50)finalPoint=snapped;
+      }
+    }
+    console.log('[取点调试] 最终坐标:',finalPoint[0].toFixed(4),finalPoint[1].toFixed(4),finalPoint[2].toFixed(4));
+    this.addPoint(finalPoint);
+    });showStatus('右键选3个点');}
+  deactivate(){this.isActive=false;if(this.sub){this.sub.unsubscribe();this.sub=null;}}
+  addPoint(pt){
+    if(this.points.length>=this.maxPoints){this.points.shift();renderer.removeActor(this.actors.shift());}
+    this.points.push(pt);
+    const src=vtk.Filters.Sources.vtkSphereSource.newInstance();src.setCenter(pt);src.setRadius(1.5);
+    const m=vtk.Rendering.Core.vtkMapper.newInstance();m.setInputData(src.getOutputData());
+    const a=vtk.Rendering.Core.vtkActor.newInstance();a.setMapper(m);a.getProperty().setColor(0,1,0);
+    this.actors.push(a);renderer.addActor(a);renderWindow.render();
+    showStatus(`已选 ${this.points.length}/${this.maxPoints}`);
+    if(this.points.length>=this.maxPoints){this.deactivate();document.getElementById("btn-pick-mode").classList.remove("active");showStatus('已满3点，点生成');}
+  }
+  async generate(){
+    if(this.points.length<this.maxPoints){alert('需3个点');return;}
+    showProgress('生成假体中..', 0);
+    // 监听进度
+    window.electronapi.onGenerateProgress((d) => {
+      updateProgress(d.progress || 0, (d.progress || 0) + '%');
+    });
+    try{
+      let mp='';if(modelManager.models['scapula'])mp=modelManager.models['scapula'].url;else if(modelManager.models['Scapula'])mp=modelManager.models['Scapula'].url;else if(modelManager.models['mesh'])mp=modelManager.models['mesh'].url;else if(modelManager.models['humerus'])mp=modelManager.models['humerus'].url;else if(modelManager.models['Humerus'])mp=modelManager.models['Humerus'].url;else if(modelManager.models['guide'])mp=modelManager.models['guide'].url;
+      const pts=this.points.map(p=>[p[0],p[1],p[2]]);
+      console.log('[生成] 模型路径:', mp, '模型列表:', Object.keys(modelManager.models));
+      console.log('[生成] 发送点坐标:', JSON.stringify(pts));
+      const r=await window.electronapi.path(pts,mp);
+      hideProgress();
+      if(r){
+        // 兼容新旧返回格式（新：{result, raw_angle1, raw_angle2}，旧：string）
+        const resultStr = typeof r === 'string' ? r : r.result;
+        const rawA1 = typeof r === 'object' ? r.raw_angle1 : undefined;
+        const rawA2 = typeof r === 'object' ? r.raw_angle2 : undefined;
+        const l=resultStr.split('\n');
+        if(l.length>=3){
+          document.querySelector('.data-box1').value=parseFloat(l[0]).toFixed(2);
+          document.querySelector('.data-box2').value=parseFloat(l[1]).toFixed(2);
+          document.querySelector('.data-box3').value=parseFloat(l[2]).toFixed(2);
+          // 存储原始旋转参数，供后续微调使用
+          window._rawAngle1 = rawA1 !== undefined ? rawA1 : parseFloat(l[1]);
+          window._rawAngle2 = rawA2 !== undefined ? rawA2 : parseFloat(l[2]);
+          console.log('[生成] 原始旋转参数:', window._rawAngle1, window._rawAngle2);
+          const sp=l.length>=4?l[3]:currentDirPath;
+          window._lastStlDir=sp;
+          await this.autoLoad(sp);
+          this.clearActors();
+          this.points=[];
+          renderWindow.render();
+          showStatus('生成完成');
+          alert('假体模型已保存至：\n'+sp);
+        }
+      }
+    }catch(e){hideProgress();console.error('[生成] 错误:', e);showStatus('生成失败: ' + (e.message || e));}
+  }
+  async autoLoad(sp,forceReload=false){const sep=sp.includes('\\')?'\\':'/';for(const n of['nail1','guide','handle','jizuo']){try{await modelManager.loadModel(n,sp+sep+n+'.stl',true,forceReload);}catch(e){console.warn('[autoLoad] 加载失败:',n,e);}}document.getElementById("cb-nail").checked=true;document.getElementById("cb-guide").checked=true;document.getElementById("cb-jizuo").checked=true;modelManager.resetCamera();showParamPanel(sp);}
+  clear(){this.deactivate();this.clearActors();this.points=[];renderWindow.render();showStatus('已清除');}
+  clearActors(){this.actors.forEach(a=>renderer.removeActor(a));this.actors=[];}
+}
+const pointPicker=new PointPicker();
+const pickSidebar=document.getElementById("pick-sidebar");
+const pickBtn=document.getElementById("icon-pick");
+let pickTimer=null;
+pickBtn.addEventListener("click",function(){clearTimeout(pickTimer);switchToVtkMode();const r=pickBtn.getBoundingClientRect();pickSidebar.style.top=r.top+"px";pickSidebar.style.left=(r.right+5)+"px";pickSidebar.style.display="flex";});
+pickSidebar.addEventListener("mouseenter",()=>clearTimeout(pickTimer));
+pickSidebar.addEventListener("mouseleave",()=>pickTimer=setTimeout(()=>pickSidebar.style.display="none",300));
+pickBtn.addEventListener("mouseleave",()=>pickTimer=setTimeout(()=>pickSidebar.style.display="none",300));
+document.getElementById("btn-pick-mode").addEventListener("click",function(){pointPicker.activate();this.classList.add("active");pickSidebar.style.display="none";});
+document.getElementById("btn-generate").addEventListener("click",()=>pointPicker.generate());
+document.getElementById("btn-clear-points").addEventListener("click",function(){pointPicker.clear();document.getElementById("btn-pick-mode").classList.remove("active");});
+document.getElementById("clear1").addEventListener("click",function(){pointPicker.clear();document.getElementById("btn-pick-mode").classList.remove("active");});
+
+// ============================================================
+// 旋转中心微调工具
+// ============================================================
+class RotationAdjuster {
+  constructor() {
+    this.center = null;       // [x,y,z] 旋转中心
+    this.isActive = false;    // 是否在选取中心点模式
+    this.centerActor = null;  // 标记球体 actor
+    this.currentDirPath = ''; // 当前模型目录
+    this._keyHandler = null;
+    this._clickSub = null;
+    this._rotX = 0;           // 累计旋转增量（度）
+    this._rotY = 0;
+    this._rotZ = 0;
+    this._origAngle1 = 0;     // 设置旋转中心时的原始角度
+    this._origAngle2 = 0;
+  }
+
+  activate() {
+    // 清除旧标记
+    if (this.centerActor) { renderer.removeActor(this.centerActor); this.centerActor = null; }
+    this.center = null;
+    this._disableKeyboard();
+    document.getElementById("btn-confirm-adjust").disabled = true;
+    document.getElementById("btn-save-regenerate").disabled = true;
+    this.isActive = true;
+    showStatus('请点击3D模型设置旋转中心（右键选点）');
+    // 监听右键点击
+    if (this._clickSub) { this._clickSub.unsubscribe(); this._clickSub = null; }
+    this._clickSub = renderWindow.getInteractor().onRightButtonPress((callData) => {
+      if (renderer !== callData.pokedRenderer) return;
+      const pos = [callData.position.x, callData.position.y, 0.0];
+      // 使用 CellPicker，验证是否命中可见模型的网格面
+      vtkPicker.pick(pos, renderer);
+      const cellId = typeof vtkPicker.getCellId === 'function' ? vtkPicker.getCellId() : -1;
+      if (cellId < 0) return;
+      // 检查命中的 actor 是否属于可见模型（忽略隐藏的肱骨等）
+      const actors = vtkPicker.getActors();
+      let hitVisible = false;
+      for (let i = 0; i < actors.length; i++) {
+        const entry = Object.entries(modelManager.models).find(([,m]) => m.actor === actors[i]);
+        if (entry && modelManager.isVisible(entry[0])) { hitVisible = true; break; }
+      }
+      if (!hitVisible) return;
+      const worldPos = vtkPicker.getPickPosition();
+      if (worldPos) {
+        this.setCenter(worldPos);
+      }
+    });
+  }
+
+  setCenter(pos) {
+    this.center = [pos[0], pos[1], pos[2]];
+    this.isActive = false;
+    this._rotX = 0; this._rotY = 0; this._rotZ = 0;
+    // 使用原始旋转参数（来自 find_nail 搜索），而非显示的几何角度
+    this._origAngle1 = window._rawAngle1 !== undefined ? window._rawAngle1 : (parseFloat(document.querySelector('.data-box2').value) || 0);
+    this._origAngle2 = window._rawAngle2 !== undefined ? window._rawAngle2 : (parseFloat(document.querySelector('.data-box3').value) || 0);
+    console.log('[旋转调整器] 原始旋转参数:', this._origAngle1, this._origAngle2);
+    if (this._clickSub) { this._clickSub.unsubscribe(); this._clickSub = null; }
+    // 渲染红色标记球
+    const sphere = vtk.Filters.Sources.vtkSphereSource.newInstance({ radius: 1.5, thetaResolution: 16, phiResolution: 16 });
+    const mapper = vtk.Rendering.Core.vtkMapper.newInstance();
+    mapper.setInputData(sphere.getOutputData());
+    this.centerActor = vtk.Rendering.Core.vtkActor.newInstance();
+    this.centerActor.setMapper(mapper);
+    this.centerActor.getProperty().setColor(1, 0.2, 0.2);
+    this.centerActor.getProperty().setOpacity(0.8);
+    this.centerActor.setPosition(pos[0], pos[1], pos[2]);
+    renderer.addActor(this.centerActor);
+    renderWindow.render();
+    // 启用键盘旋转
+    this._enableKeyboard();
+    document.getElementById("btn-confirm-adjust").disabled = false;
+    document.getElementById("btn-save-regenerate").disabled = false;
+    showStatus('旋转中心已设置，用方向键微调角度（可再次点击按钮重新选点）');
+  }
+
+  _enableKeyboard() {
+    if (this._keyHandler) return;
+    this._keyHandler = (e) => {
+      if (!this.center || (!modelManager.models['nail1'] && !modelManager.models['nail'])) return;
+      const dt = 0.1; // 每步 0.1 度（与 system/VtkClass.py 一致）
+      let angleX = 0, angleY = 0, angleZ = 0;
+      // ↑↓控制前后倾角（angle1，绕X轴），←→控制左右倾角（angle2，绕Y轴）
+      if (e.key === 'ArrowLeft') { angleY = -dt; e.preventDefault(); }
+      else if (e.key === 'ArrowRight') { angleY = dt; e.preventDefault(); }
+      else if (e.key === 'ArrowUp') { angleX = -dt; e.preventDefault(); }
+      else if (e.key === 'ArrowDown') { angleX = dt; e.preventDefault(); }
+      else if (e.key === 'x') { angleZ = -dt; e.preventDefault(); }
+      else if (e.key === 'c') { angleZ = dt; e.preventDefault(); }
+      else if (e.key === 'a') {
+        // 重置旋转增量，恢复到原始角度
+        const nailModel = modelManager.models['nail1'] || modelManager.models['nail'];
+        if (nailModel) { nailModel.actor.setOrientation(0, 0, 0); this._rotX = 0; this._rotY = 0; this._rotZ = 0; renderWindow.render(); this._updateParamsFromNail(); }
+        e.preventDefault(); return;
+      }
+      else return;
+      this._rotateNail(angleX, angleY, angleZ);
+    };
+    document.addEventListener('keydown', this._keyHandler);
+  }
+
+  _disableKeyboard() {
+    if (this._keyHandler) { document.removeEventListener('keydown', this._keyHandler); this._keyHandler = null; }
+  }
+
+  _rotateNail(angleX, angleY, angleZ) {
+    const nailModel = modelManager.models['nail1'] || modelManager.models['nail'];
+    if (!nailModel) return;
+    const actor = nailModel.actor;
+    const c = this.center;
+    // 设置旋转中心（与 system/VtkClass.py SetOrigin 一致）
+    actor.setOrigin(c[0], c[1], c[2]);
+    // 累计旋转增量（度）
+    this._rotX += angleX;
+    this._rotY += angleY;
+    this._rotZ += angleZ;
+    // 使用 setOrientation 应用累计旋转（与 system SetOrientation 一致）
+    actor.setOrientation(this._rotX, this._rotY, this._rotZ);
+    renderWindow.render();
+    this._updateParamsFromNail();
+  }
+
+  _updateParamsFromNail() {
+    // 显示当前 VTK 旋转增量（仅供参考，不修改原始角度参数）
+    // 微调后的实际角度由 saveAndRegenerate 发送给 Python 重新计算
+    const nailModel = modelManager.models['nail1'] || modelManager.models['nail'];
+    if (!nailModel || !this.center) return;
+    // 显示原始角度 + VTK 增量作为参考值
+    const angle1 = (this._origAngle1 + this._rotX).toFixed(2);
+    const angle2 = (this._origAngle2 + this._rotY).toFixed(2);
+    document.querySelector('.data-box2').value = angle1;
+    document.querySelector('.data-box3').value = angle2;
+    console.log('[微调显示] 原始:', this._origAngle1.toFixed(2), this._origAngle2.toFixed(2),
+                '增量:', this._rotX.toFixed(2), this._rotY.toFixed(2),
+                '显示:', angle1, angle2);
+  }
+
+  async confirmAndUpdate() {
+    if (!this.center) { showStatus('请先设置旋转中心'); return; }
+    showStatus('正在计算参数...');
+    try {
+      const result = await window.electronapi.adjustParameters({
+        center: this.center,
+        dirPath: this.currentDirPath
+      });
+      if (result) {
+        document.querySelector('.data-box1').value = parseFloat(result.length).toFixed(2);
+        document.querySelector('.data-box2').value = parseFloat(result.angle1).toFixed(2);
+        document.querySelector('.data-box3').value = parseFloat(result.angle2).toFixed(2);
+        // 更新原始旋转参数为当前 VTK 旋转后的值（用于后续微调基准）
+        this._origAngle1 = this._origAngle1 + this._rotX;
+        this._origAngle2 = this._origAngle2 + this._rotY;
+        this._rotX = 0; this._rotY = 0; this._rotZ = 0;
+        window._rawAngle1 = this._origAngle1;
+        window._rawAngle2 = this._origAngle2;
+        console.log('[确认更新] 新原始旋转参数:', this._origAngle1.toFixed(2), this._origAngle2.toFixed(2));
+        showStatus('参数已更新');
+      }
+    } catch(e) { showStatus('计算失败: ' + e.message); }
+  }
+
+  async saveAndRegenerate() {
+    if (!this.center) { showStatus('请先设置旋转中心'); return; }
+    showStatus('正在保存并重新生成...');
+    try {
+      // 保存旋转后的 nail
+      const nailModel = modelManager.models['nail1'] || modelManager.models['nail'];
+      if (!nailModel) { showStatus('未找到钉子模型'); return; }
+      const mat = nailModel.actor.getMatrix();
+      // 发送原始旋转参数 + VTK 增量，让 Python 在原始角度基础上叠加增量
+      const params = {
+        length: parseFloat(document.querySelector('.data-box1').value) || 0,
+        raw_angle1: this._origAngle1 + this._rotX,  // 原始角度 + VTK 增量
+        raw_angle2: this._origAngle2 + this._rotY,
+        angle1: parseFloat(document.querySelector('.data-box2').value) || 0,  // 显示用
+        angle2: parseFloat(document.querySelector('.data-box3').value) || 0,
+        dirPath: this.currentDirPath,
+        transformMatrix: mat
+      };
+      console.log('[保存重新生成] 原始角度:', this._origAngle1.toFixed(2), this._origAngle2.toFixed(2));
+      console.log('[保存重新生成] VTK增量:', this._rotX.toFixed(2), this._rotY.toFixed(2));
+      console.log('[保存重新生成] 发送参数:', params);
+      const result = await window.electronapi.regenerateModels(params);
+      if (result && result.success) {
+        const stlDir = result.dirPath || this.currentDirPath;
+        window._lastStlDir = stlDir;
+        this.currentDirPath = stlDir;
+        // 更新原始旋转参数（来自 Python 重新生成后的 cfg）
+        if (result.raw_angle1 !== undefined) window._rawAngle1 = result.raw_angle1;
+        if (result.raw_angle2 !== undefined) window._rawAngle2 = result.raw_angle2;
+        this.deactivate();
+        await pointPicker.autoLoad(stlDir, true);
+        showStatus('重新生成完成');
+      }
+    } catch(e) { showStatus('重新生成失败: ' + e.message); }
+  }
+
+  deactivate() {
+    this._disableKeyboard();
+    this.isActive = false;
+    if (this._clickSub) { this._clickSub.unsubscribe(); this._clickSub = null; }
+    if (this.centerActor) { renderer.removeActor(this.centerActor); this.centerActor = null; }
+    this.center = null;
+    this._rotX = 0; this._rotY = 0; this._rotZ = 0;
+    this._origAngle1 = 0; this._origAngle2 = 0;
+    renderWindow.render();
+    document.getElementById("btn-set-center").disabled = false;
+    document.getElementById("btn-confirm-adjust").disabled = true;
+    document.getElementById("btn-save-regenerate").disabled = true;
+  }
+}
+const rotationAdjuster = new RotationAdjuster();
+
+// 旋转中心按钮事件
+document.getElementById("btn-set-center").addEventListener("click", () => {
+  rotationAdjuster.currentDirPath = window._lastStlDir || currentDirPath;
+  rotationAdjuster.activate();
+});
+document.getElementById("btn-confirm-adjust").addEventListener("click", () => rotationAdjuster.confirmAndUpdate());
+document.getElementById("btn-save-regenerate").addEventListener("click", () => rotationAdjuster.saveAndRegenerate());
+
+// ============================================================
+// 测距工具
+// ============================================================
+class MeasureTool {
+  constructor() { this.points=[]; this.actors=[]; this.isActive=false; this.sub=null; }
+  activate() {
+    if (this.isActive) return;
+    // 关闭选点工具
+    pointPicker.clear();
+    document.getElementById("btn-pick-mode").classList.remove("active");
+    this.isActive = true; this.points = []; this.clearActors();
+    switchToVtkMode();
+    this.sub = renderWindow.getInteractor().onRightButtonPress(cd => {
+      if (renderer !== cd.pokedRenderer) return;
+      const screenPos = [cd.position.x, cd.position.y, 0.0];
+      const result = pickWithFallback(screenPos);
+      if (!result.point) { showStatus('未命中骨骼'); return; }
+      let finalPoint = result.point;
+      // 吸附到骨骼表面
+      if (result.actor && result.actor.getMapper()) {
+        const polyData = result.actor.getMapper().getInputData();
+        if (polyData) {
+          const snapped = snapToMeshSurface(result.point, polyData);
+          const dx=snapped[0]-result.point[0], dy=snapped[1]-result.point[1], dz=snapped[2]-result.point[2];
+          if (Math.sqrt(dx*dx+dy*dy+dz*dz) < 50) finalPoint = snapped;
+        }
+      }
+      this.addPoint(finalPoint);
+    });
+    showStatus('测距模式：右键选2个点');
+  }
+  addPoint(pt) {
+    if (this.points.length >= 2) { this.clearActors(); this.points = []; }
+    this.points.push(pt);
+    // 绘制端点球
+    const src = vtk.Filters.Sources.vtkSphereSource.newInstance();
+    src.setCenter(pt); src.setRadius(1.5);
+    const m = vtk.Rendering.Core.vtkMapper.newInstance();
+    m.setInputData(src.getOutputData());
+    const a = vtk.Rendering.Core.vtkActor.newInstance();
+    a.setMapper(m); a.getProperty().setColor(1, 1, 0);
+    this.actors.push(a); renderer.addActor(a);
+    showStatus(`测距：已选 ${this.points.length}/2`);
+    if (this.points.length === 2) { this.drawLine(); this.deactivate(); }
+    renderWindow.render();
+  }
+  drawLine() {
+    const p0 = this.points[0], p1 = this.points[1];
+    // 手动构建 polyData 画线段
+    const points = vtk.Common.Core.vtkPoints.newInstance();
+    points.setNumberOfPoints(2);
+    points.setPoint(0, p0[0], p0[1], p0[2]);
+    points.setPoint(1, p1[0], p1[1], p1[2]);
+    const lines = vtk.Common.Core.vtkCellArray.newInstance();
+    lines.insertNextCell([0, 1]);
+    const polyData = vtk.Common.DataModel.vtkPolyData.newInstance();
+    polyData.setPoints(points);
+    polyData.setLines(lines);
+    const lm = vtk.Rendering.Core.vtkMapper.newInstance();
+    lm.setInputData(polyData);
+    const la = vtk.Rendering.Core.vtkActor.newInstance();
+    la.setMapper(lm); la.getProperty().setColor(1, 1, 0); la.getProperty().setLineWidth(2);
+    this.actors.push(la); renderer.addActor(la);
+    // 计算物理距离（mm）并显示在参数面板
+    const dx = p1[0]-p0[0], dy = p1[1]-p0[1], dz = p1[2]-p0[2];
+    const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+    document.querySelector('.data-box-measure').textContent = dist.toFixed(1) + ' mm';
+    showStatus(`测距：${dist.toFixed(1)} mm`);
+  }
+  deactivate() { this.isActive = false; if (this.sub) { this.sub.unsubscribe(); this.sub = null; } }
+  clear() { this.deactivate(); this.clearActors(); this.points = [];
+    document.querySelector('.data-box-measure').textContent = '';
+    renderWindow.render(); showStatus('已清除测距'); }
+  clearActors() { this.actors.forEach(a => renderer.removeActor(a)); this.actors = []; }
+}
+const measureTool = new MeasureTool();
+const measureBtn = document.getElementById("icon-measure");
+measureBtn.addEventListener("click", function() {
+  if (measureTool.isActive) { measureTool.clear(); measureBtn.style.filter = ''; }
+  else { measureTool.activate(); measureBtn.style.filter = 'brightness(100)'; }
+});
+
+// ============================================================
+// 进度 & 状态
+// ============================================================
+function showProgress(t,p){document.getElementById("progressOverlay").style.display='flex';document.querySelector('.progress-title').textContent=t;document.getElementById("progressBar").style.width=p+'%';document.getElementById("progressText").textContent=p+'%';}
+function updateProgress(p,m){document.getElementById("progressBar").style.width=p+'%';document.getElementById("progressText").textContent=m||p+'%';}
+function hideProgress(){document.getElementById("progressOverlay").style.display='none';}
+function showStatus(m){console.log('[状态]',m);const b=document.getElementById("statusBar");b.textContent=m;b.style.opacity=1;clearTimeout(b._timer);b._timer=setTimeout(()=>b.style.opacity=0,3000);}
+
+// 返回按钮：恢复窗口大小
+document.getElementById("btn-back").addEventListener("click", async function(e) {
+  e.preventDefault();
+  if (paramPanelExpanded) {
+    try { await window.electronapi.resizeWindow(-250); } catch(ex) {}
+  }
+  window.location.href = "../../shouye.html";
+});
+
+switchToNiftiMode();
+
+// ============================================================
+// AI 助手 - 打开独立窗口
+// ============================================================
+document.getElementById('icon-ai').addEventListener('click', function() {
+  try { window.electronapi.openAiPanel(); } catch(e) { console.error(e); }
+});
+
+// ============================================================
+// 清屏 - 一键清除所有状态，开始新的规划
+// ============================================================
+document.getElementById('icon-clear-all').addEventListener('click', async function() {
+  try { pointPicker.clear(); } catch(e) {}
+  try { document.getElementById("btn-pick-mode").classList.remove("active"); } catch(e) {}
+  try { measureTool.clear(); } catch(e) {}
+  try { document.getElementById("icon-measure").style.filter = ''; } catch(e) {}
+  try { rotationAdjuster.deactivate(); } catch(e) {}
+  if (renderer) {
+    Object.keys(modelManager.models).forEach(name => {
+      try {
+        const m = modelManager.models[name];
+        if (m && m.actor) {
+          renderer.removeActor(m.actor);
+          try { vtkPicker.removePickList(m.actor); } catch(e) {}
+          if (vtkPointPicker) try { vtkPointPicker.removePickList(m.actor); } catch(e) {}
+        }
+      } catch(e) {}
+    });
+    modelManager.models = {};
+    modelManager.actors = {};
+    try { renderWindow.render(); } catch(e) {}
+  }
+  try { if (niftiCtx) niftiCtx.clearRect(0, 0, niftiCanvas.width, niftiCanvas.height); } catch(e) {}
+  try {
+    const overlayCanvas = document.getElementById('overlayCanvas');
+    if (overlayCanvas) { overlayCanvas.getContext('2d').clearRect(0, 0, overlayCanvas.width, overlayCanvas.height); }
+  } catch(e) {}
+  currentDirPath = '';
+  currentNiftiPath = '';
+  window._lastStlDir = '';
+  volume = null;
+  segVolume = null;
+  shape = null;
+  spacing = null;
+  cur = { axial: 0, sagittal: 0, coronal: 0 };
+  activePlane = 'axial';
+  humerusVisible = true;
+  isInferring = false;
+  try { document.querySelector('.data-box1').value = ''; } catch(e) {}
+  try { document.querySelector('.data-box2').value = ''; } catch(e) {}
+  try { document.querySelector('.data-box3').value = ''; } catch(e) {}
+  try { document.querySelector('.data-box-measure').textContent = ''; } catch(e) {}
+  try { document.getElementById("paramPanel").style.display = 'none'; } catch(e) {}
+  try { document.getElementById("adjustBtns").style.display = 'none'; } catch(e) {}
+  if (paramPanelExpanded) {
+    try { await window.electronapi.resizeWindow(-250); } catch(e) {}
+    paramPanelExpanded = false;
+  }
+  try { document.getElementById("cb-nail").checked = false; } catch(e) {}
+  try { document.getElementById("cb-guide").checked = false; } catch(e) {}
+  try { document.getElementById("cb-jizuo").checked = false; } catch(e) {}
+  try { if (sliceSlider) { sliceSlider.value = 0; sliceSlider.max = 0; } } catch(e) {}
+  try { hideProgress(); } catch(e) {}
+  showStatus('已清除全部，可开始新的规划');
+});
+
+// 供主进程获取当前参数上下文（含 NIfTI 文件路径 + mesh.cfg 植入参数）
+window.getAiContextForExternal = async function() {
+  const ctx = {};
+  const box1 = document.querySelector('.data-box1').value;
+  const box2 = document.querySelector('.data-box2').value;
+  const box3 = document.querySelector('.data-box3').value;
+  if (box1 || box2 || box3) {
+    ctx.params = { length: box1, angle1: box2, angle2: box3 };
+  }
+  if (currentNiftiPath) {
+    ctx.nifti_path = currentNiftiPath;
+  }
+  if (volume && shape) {
+    ctx.ct_info = {
+      shape: shape,
+      spacing: spacing ? spacing.map(v => v.toFixed(2)) : null,
+      has_segmentation: !!(segVolume && segVolume.length === volume.length)
+    };
+  }
+  // 读取 mesh.cfg 中的植入参数（圆心、顶点ID、半径、假体目录）
+  try {
+    let stlDir = window._lastStlDir || currentDirPath;
+    if (stlDir && !stlDir.includes('savestl')) {
+      const patientId = stlDir.split(/[\\/]/).pop();
+      const savestlPath = stlDir.replace(patientId, `savestl/${patientId}`);
+      const cfg = await window.electronapi.readConfig(savestlPath);
+      if (cfg) stlDir = savestlPath;
+    }
+    const cfg = await window.electronapi.readConfig(stlDir);
+    if (cfg) {
+      ctx.implant = {
+        center: [parseFloat(cfg.center1), parseFloat(cfg.center2), parseFloat(cfg.center3)],
+        vertex_ids: [parseInt(cfg.id1), parseInt(cfg.id2), parseInt(cfg.id3)],
+        radius: parseFloat(cfg.r),
+        stl_dir: stlDir,
+        points: cfg.p1x ? [
+          [parseFloat(cfg.p1x), parseFloat(cfg.p1y), parseFloat(cfg.p1z)],
+          [parseFloat(cfg.p2x), parseFloat(cfg.p2y), parseFloat(cfg.p2z)],
+          [parseFloat(cfg.p3x), parseFloat(cfg.p3y), parseFloat(cfg.p3z)]
+        ] : null
+      };
+    }
+  } catch(e) {}
+  return ctx;
+};
 </script>
+</body>
 </html>
