@@ -1,50 +1,263 @@
-# electron-ebone
-# 本科毕业设计内容：考虑不同开发者原因，只公开和electron相关的部分
+# 🦴 基于大模型问答与分割可视化的反肩置换术前辅助规划系统
 
-## Electorn的学习链接
- https://www.electronjs.org/zh/docs/latest/
-## 项目思路
+> **Reverse Total Shoulder Arthroplasty (RTSA) Preoperative Planning System with LLM-powered Agent**
 
-### 1.需求
-<img width="530" height="574" alt="需求" src="https://github.com/user-attachments/assets/f1898da3-537b-41c4-839a-35dd7a16e1b9" />
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Electron](https://img.shields.io/badge/Electron-29.1.0-47848F?logo=electron)](https://www.electronjs.org/)
+[![Python](https://img.shields.io/badge/Python-3.9+-3776AB?logo=python)](https://www.python.org/)
+[![Award](https://img.shields.io/badge/Award-全国生物医学工程创新设计竞赛二等奖-orange)](https://www.csbme.org/)
 
-### 2.Electorn框架
-<img width="603" height="567" alt="Electron框架" src="https://github.com/user-attachments/assets/585b9574-6c9e-4645-8724-6857e22fac11" />
+---
 
-### 3.系统整体架构
-<img width="1345" height="1276" alt="流程图" src="https://github.com/user-attachments/assets/0f17cfb4-0b8e-4f56-911f-2a5588704ea0" />
+## 📖 项目简介
 
-### 4.Electron进程
-<img width="732" height="451" alt="Electron进程" src="https://github.com/user-attachments/assets/e2bc1b0c-5238-4763-bd34-279bc970bad2" />
+本项目是一套专为**反式肩关节置换术（Reverse Total Shoulder Arthroplasty, RTSA）**设计的智能化、一站式术前辅助规划系统。系统深度融合了**大语言模型智能体（LLM Agent）**、深度学习医学影像分割与三维可视化技术，突破传统术前规划软件操作复杂、耗时长、缺乏智能化交互的瓶颈，为临床医生提供"影像数据 + 医学知识"双轮驱动的综合规划方案。
 
-### 5.异步处理
-<img width="1083" height="387" alt="nnunet异步处理" src="https://github.com/user-attachments/assets/74296758-7b05-46ba-a781-174ab2429f05" />
+**核心创新**：在传统影像处理工具的基础上，创新性地引入了基于 **Qwen-VL-Max** 的医学智能体（Agent）交互与辅助决策模块，实现自然语言驱动的术前规划、实时知识问答、螺钉参数智能校验与风险预警。
 
-### 6.DICOM图像读取
-<img width="705" height="380" alt="dcm图像显示流程" src="https://github.com/user-attachments/assets/4fd56b85-3d12-444d-85b0-3ed9293509c1" />
+---
 
-### 7.png切换
-<img width="1216" height="347" alt="png切换技术路线" src="https://github.com/user-attachments/assets/0d834fc9-454d-4f52-b818-060835975fad" />
+## ✨ 核心功能
 
-### 8.螺钉计算逻辑
-<img width="546" height="368" alt="模型运算处理逻辑" src="https://github.com/user-attachments/assets/fee2a00c-cf9b-4ebc-b993-19abdb1e96d3" />
+### 🔴 1. 大模型智能体（Agent）交互与决策辅助
+- **自然语言交互**：医生可通过自然语言与系统对话，获取手术方案建议、解剖结构解析及规划流程指导
+- **RAG 知识检索**：基于 Faiss 向量索引构建本地化医学知识库，支持手术指南、假体手册、临床文献的实时检索与问答
+- **多模态上下文融合**：智能体可同时理解 CT 影像切片、螺钉规划参数与文本指令，实现"看懂影像 + 理解意图 + 生成决策"
+- **Function Calling 工具调用**：将"将螺钉长度增加 2mm"等自然语言指令精准转化为对底层算法的函数调用
+- **增量知识更新闭环**：临床交互反馈经自动清洗 → 向量化 → Faiss 索引追加，形成持续进化的知识库
 
-### 9.前后端通信
-<img width="1083" height="387" alt="异步处理图" src="https://github.com/user-attachments/assets/c3bb6594-c559-43db-b01d-59dbc23487ef" />
+### 🟠 2. 深度学习自动分割
+- 基于 **nnU-Net** 自适应框架，实现肱骨与肩胛骨的端到端自动分割
+- 支持 DICOM、NIfTI 等标准医学影像格式
+- 在 69 套临床 CT 数据上完成训练与验证
 
-## 部分成果展示
-### 1
-<img width="600" height="450" alt="首页" src="https://github.com/user-attachments/assets/0b4f71ab-144d-4e1d-964d-b9c77b63f529" />
-### 2
-<img width="600" height="450" alt="dicom" src="https://github.com/user-attachments/assets/b48bd850-6c2c-4273-8d6f-4e5850994aea" />
-### 3
-<img width="600" height="450" alt="vtk" src="https://github.com/user-attachments/assets/1a8be529-671b-4467-bfe0-6f3c6ba09088" />
-### 4
-<img width="641" height="450" alt="测距" src="https://github.com/user-attachments/assets/67e0a2fb-1c35-4b2e-a728-2c0c265fcf18" />
-### 5
-<img width="714" height="437" alt="导板复选" src="https://github.com/user-attachments/assets/ac570958-29e9-4803-b055-5bc507deb8b9" />
-### 6
-<img width="641" height="450" alt="三维重建" src="https://github.com/user-attachments/assets/916642bb-4933-4e0e-bd9d-710840a04ea4" />
-### 7
-<img width="639" height="389" alt="微信图片_20240421200317" src="https://github.com/user-attachments/assets/daeb9b50-fa08-4494-92bc-6905600734b6" />
+### 🟡 3. 三维可视化与交互
+- 基于 **vtk.js / WebGL** 实现高保真三维表面重建
+- 支持 360°旋转、缩放、透明度调节、多模型叠加渲染
+- 骨骼、螺钉、基座、导板同窗融合显示
+- 一键隐藏/显示特定解剖结构
 
+### 🟢 4. 螺钉精准计算与手术规划
+- 融合 **CT 骨密度（HU 值）** 与 **解剖结构** 双特征约束
+- 基于用户取点输入，自动解算最优螺钉植入位点、进钉角度及最大安全长度
+- 支持入钉角度的键盘微调和实时参数展示
+- 测距功能辅助精确空间测量
+
+---
+
+## 🏗️ 系统架构
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Electron 主进程 (Node.js)                   │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │  IPC 通信   │  │ 文件 I/O    │  │ 子进程调度 (Python)  │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        ▼                   ▼                   ▼
+┌───────────────┐  ┌───────────────┐  ┌───────────────┐
+│   渲染进程     │  │  nnU-Net      │  │  Agent 后端   │
+│  (Chromium)   │  │  分割模块     │  │  (Python)     │
+│               │  │               │  │               │
+│ • vtk.js 3D   │  │ • 自动分割    │  │ • Qwen-VL     │
+│ • Cornerstone │  │ • NIfTI 处理  │  │ • Faiss RAG   │
+│ • Canvas 2D   │  │ • STL 导出    │  │ • Embedding   │
+│ • UI 交互     │  │               │  │ • 增量更新    │
+└───────────────┘  └───────────────┘  └───────────────┘
+        │
+        ▼
+┌─────────────────────────────────────────────────────────┐
+│              智能体（Agent）核心工作流                     │
+│  用户提问 → 多模态上下文收集 → Embedding 向量化             │
+│     → Faiss 相似度检索(Top-5) → Prompt 组装              │
+│     → Qwen-VL-Max 推理 → 流式输出 → 反馈采集              │
+│     → 清洗审核 → 向量追加 → 知识库进化                     │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🛠️ 技术栈
+
+| 类别 | 技术 |
+|------|------|
+| **前端框架** | Electron 29.1.0, Chromium, HTML5/CSS3/JavaScript |
+| **三维可视化** | vtk.js, WebGL, Marching Cubes |
+| **医学影像** | Cornerstone.js, DICOM, NIfTI |
+| **深度学习分割** | nnU-Net, PyTorch, Python 3.9+ |
+| **大模型 Agent** | Qwen-VL-Max, DashScope API, RAG |
+| **向量检索** | Faiss, Sentence-Transformers (Embedding) |
+| **三维模型处理** | nibabel, VTK, PIL |
+| **通信机制** | Electron IPC (ipcMain / ipcRenderer), child_process |
+
+---
+
+## 📂 项目结构
+
+```
+electron-ebone/
+├── main.js                    # Electron 主进程入口
+├── preload.js                 # 预加载脚本（安全桥接）
+├── package.json               # 项目配置
+├── src/
+│   ├── renderer/              # 渲染进程前端代码
+│   │   ├── index.html         # 主界面
+│   │   ├── css/               # 样式文件
+│   │   ├── js/                # 前端交互逻辑
+│   │   │   ├── vtk-render.js  # vtk.js 三维渲染
+│   │   │   ├── cornerstone.js # DICOM/NIfTI 显示
+│   │   │   └── ai-chat.js     # Agent 对话界面
+│   │   └── assets/            # 静态资源
+│   ├── main/                  # 主进程逻辑
+│   │   ├── ipc-handlers.js    # IPC 通信处理器
+│   │   └── python-runner.js   # Python 子进程调度
+│   └── python/                # Python 后端算法
+│       ├── nnunet/            # nnU-Net 分割推理
+│       ├── screw_calc/        # 螺钉自动计算算法
+│       ├── ai_agent/          # 智能体模块
+│       │   ├── rag_retrieve.py    # Faiss RAG 检索
+│       │   ├── embedding.py       # 文本向量化
+│       │   ├── knowledge_update.py # 增量知识更新
+│       │   └── ai_chat.py         # Qwen API 调用
+│       └── utils/             # 工具函数（格式转换等）
+├── models/                    # 预训练模型权重
+├── docs/                      # 文档
+└── README.md                  # 本文件
+```
+
+---
+
+## 🚀 快速开始
+
+### 环境要求
+
+- **操作系统**：Windows 11 / macOS / Linux
+- **Node.js**：≥ 18.0
+- **Python**：≥ 3.9
+- **GPU**：NVIDIA GPU（推荐 RTX 4060 及以上，用于 nnU-Net 推理）
+
+### 安装步骤
+
+```bash
+# 1. 克隆仓库
+git clone https://github.com/ssc1230609-spec/electron-ebone.git
+cd electron-ebone
+
+# 2. 安装 Node.js 依赖
+npm install
+
+# 3. 安装 Python 依赖
+pip install -r requirements.txt
+
+# 4. 配置 Qwen API（可选，用于 Agent 功能）
+# 在 src/python/ai_agent/config.py 中配置 DashScope API Key
+
+# 5. 启动应用
+npm start
+```
+
+---
+
+## 📊 核心模块详解
+
+### 1️⃣ 智能体（Agent）模块
+
+智能体模块作为系统的"认知中枢"，内化了海量骨科解剖学文献与权威临床手术指南。
+
+**工作流程**：
+1. **上下文收集**：通过 `getAiContextForExternal` 收集患者 NIfTI 路径、CT 元数据、假体参数
+2. **知识检索**：问题经 Embedding 向量化后，在 Faiss 索引中做余弦相似度检索，取出 Top-5 相关知识片段
+3. **多模态推理**：将检索结果 + System Prompt + 患者 CT 切片 + 规划参数组装为 Qwen-VL-Max 请求体
+4. **流式输出**：逐 token 解析 SSE 响应，实时推送至前端聊天界面
+5. **反馈学习**：用户对回答标记"采纳/纠正"，优质数据经清洗后向量化追加入库
+
+**技术亮点**：
+- **RAG（检索增强生成）**：避免大模型幻觉，确保医学问答有据可查
+- **增量知识更新**：系统在使用过程中持续进化，越用越聪明
+- **Function Calling**：实现从"对话意图"到"系统执行"的无缝转换
+
+### 2️⃣ nnU-Net 深度学习分割
+
+- **数据集**：69 套临床胸部/肩部 CT 平扫数据
+- **标注标签**：1=肱骨，2=肩胛骨（左右骨性结构统一标签）
+- **数据增强**：弹性形变、旋转(-30°~30°)、缩放(0.7~1.4)、高斯噪声、高斯模糊、伽马变换、镜像翻转
+- **推理输出**：.nii.gz 分割掩膜 → 经后处理转换为 .stl 三维模型
+
+### 3️⃣ 螺钉自动计算算法
+
+- **输入**：用户在三维肩胛骨模型上选取的关键位点
+- **约束条件**：
+  - CT 骨密度（HU 值）映射的骨质强度分布
+  - 解剖学标志构建的空间几何约束
+  - 神经血管密集区规避
+  - 骨皮质薄弱区规避
+- **输出**：螺钉最佳植入位点、进钉角度、最大安全长度
+- **微调**：支持键盘方向键以 0.1° 步进微调入钉角度
+
+---
+
+## 🧪 测试与验证
+
+### 测试环境
+
+| 参数 | 环境一 | 环境二 |
+|------|--------|--------|
+| CPU | i7-12650H | i9-13900HX |
+| 内存 | 16GB | 32GB |
+| GPU | NVIDIA GTX 4060 | NVIDIA RTX 4080 |
+| 操作系统 | Windows 11 64位 | Windows 11 64位 |
+
+### 性能指标
+
+| 功能 | 耗时 |
+|------|------|
+| DICOM 图像加载 | 几乎无感知延迟 |
+| STL 模型导入 | ~3 秒 |
+| 完整术前规划流程（分割 + 计算） | ~10 min (GTX 4060) / ~5 min (RTX 4080) |
+
+### 临床验证
+
+- **参与者**：5 名临床医生 + 25 名临床实习生
+- **评估方式**：量表打分，围绕系统性能与临床应用可能性进行量化评价
+- **结果**：系统在稳定性、易用性、规划精准度方面获得积极反馈
+
+---
+
+## 🏆 获奖与成果
+
+- **第十一届全国大学生生物医学工程创新设计竞赛 二等奖**（2026年6月）
+- **赛道**：骨科与运动康复 — 自选项目组
+- **作品编号**：4810
+
+---
+
+## 📚 相关文献与技术参考
+
+- nnU-Net: [Isensee et al., Nature Methods 2021](https://doi.org/10.1038/s41592-020-01008-z)
+- Qwen-VL: [Bai et al., 2023](https://arxiv.org/abs/2308.12966)
+- Faiss: [Johnson et al., IEEE TPAMI 2019](https://doi.org/10.1109/TPAMI.2019.2921572)
+- VTK / vtk.js: [Kitware](https://vtk.org/)
+
+---
+
+## 🤝 贡献指南
+
+欢迎提交 Issue 和 Pull Request！如有问题或建议，请通过 GitHub Issues 联系。
+
+---
+
+## 📄 开源协议
+
+本项目基于 [MIT License](LICENSE) 开源。
+
+---
+
+## 👥 团队
+
+本项目由南方医科大学生物医学工程专业团队开发。
+
+---
+
+> **声明**：本系统仅供学术研究与临床辅助参考，不构成医疗建议。实际手术决策请遵循专业医师指导。
