@@ -94,38 +94,7 @@
 
 ---
 
-## 📂 项目结构
 
-```
-electron-ebone/
-├── main.js                    # Electron 主进程入口
-├── preload.js                 # 预加载脚本（安全桥接）
-├── package.json               # 项目配置
-├── src/
-│   ├── renderer/              # 渲染进程前端代码
-│   │   ├── index.html         # 主界面
-│   │   ├── css/               # 样式文件
-│   │   ├── js/                # 前端交互逻辑
-│   │   │   ├── vtk-render.js  # vtk.js 三维渲染
-│   │   │   ├── cornerstone.js # DICOM/NIfTI 显示
-│   │   │   └── ai-chat.js     # Agent 对话界面
-│   │   └── assets/            # 静态资源
-│   ├── main/                  # 主进程逻辑
-│   │   ├── ipc-handlers.js    # IPC 通信处理器
-│   │   └── python-runner.js   # Python 子进程调度
-│   └── python/                # Python 后端算法
-│       ├── nnunet/            # nnU-Net 分割推理
-│       ├── screw_calc/        # 螺钉自动计算算法
-│       ├── ai_agent/          # 智能体模块
-│       │   ├── rag_retrieve.py    # Faiss RAG 检索
-│       │   ├── embedding.py       # 文本向量化
-│       │   ├── knowledge_update.py # 增量知识更新
-│       │   └── ai_chat.py         # Qwen API 调用
-│       └── utils/             # 工具函数（格式转换等）
-├── models/                    # 预训练模型权重
-├── docs/                      # 文档
-└── README.md                  # 本文件
-```
 
 ---
 
