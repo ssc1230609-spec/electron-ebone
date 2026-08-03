@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ebone-Agent</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html {
+      height: 100%;
+      /* 四周边框留出 6px 透明区域作为拖拽缩放手柄 */
+      padding: 6px;
+      background: transparent;
+    }
+    body {
+      background: linear-gradient(-90deg, #29bdd9 0%, #276ace 100%);
+      font-family: "Microsoft YaHei UI", sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.4);
+    }
+
+    #aiHeader {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 8px 0 16px;
+      background: rgba(255,255,255,0.15);
+      color: white;
+      font-size: 15px;
+      font-weight: 600;
+      border-bottom: 1px solid rgba(255,255,255,0.3);
+      flex-shrink: 0;
+      height: 40px;
+      -webkit-app-region: drag;
+    }
+    #aiHeader .title-text {
+      flex: 1;
+      cursor: default;
+      line-height: 40px;
+    }
+
+    #aiMessages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      -webkit-app-region: no-drag;
+      cursor: default;
+    }
+
+    .ai-msg {
+      max-width: 88%;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.6;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    .ai-msg-user {
+      align-self: flex-end;
+      background: rgba(255,255,255,0.3);
+      color: white;
+      border-bottom-right-radius: 2px;
+    }
+
+    .ai-msg-assistant {
+      align-self: flex-start;
+      background: rgba(255,255,255,0.9);
+      color: #222;
+      border-bottom-left-radius: 2px;
+    }
+
+    .ai-msg-error {
+      align-self: center;
+      background: rgba(255,50,50,0.3);
+      color: white;
+      font-size: 13px;
+    }
+
+    .ai-think-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .ai-think-arrow {
+      font-size: 10px;
+      color: #888;
+      display: inline-block;
+      width: 12px;
+      text-align: center;
+    }
+
+    .ai-think-time {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .ai-think-details {
+      margin: 4px 0 8px 0;
+      padding: 8px;
+      background: rgba(0,0,0,0.06);
+      border-radius: 4px;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .ai-think-details pre {
+      margin: 0;
+      font-size: 12px;
+      color: #555;
+      white-space: pre-wrap;
+      word-break: break-all;
+      font-family: "Microsoft YaHei UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    .ai-msg-body { line-height: 1.6; }
+
+    /* 参考文献页脚（程序化展示，始终可见） */
+    .ai-citation-footer {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed #d9d9d9;
+    }
+    .ai-citation-label {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 3px;
+    }
+    .ai-citation-item {
+      font-size: 12px;
+      color: #5a7fb8;
+      line-height: 1.6;
+      word-break: break-all;
+    }
+
+    /* 反馈按钮区域 */
+    .ai-feedback-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(0,0,0,0.08);
+    }
+    .ai-feedback-bar.hidden { display: none; }
+    .ai-feedback-btn {
+      padding: 3px 10px;
+      border: 1px solid rgba(0,0,0,0.15);
+      border-radius: 12px;
+      background: transparent;
+      color: #666;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .ai-feedback-btn:hover { background: rgba(0,0,0,0.06); color: #333; }
+    .ai-feedback-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .ai-feedback-btn.adopted { background: #e6f7e6; border-color: #52c41a; color: #389e0d; }
+    .ai-feedback-btn.corrected { background: #fff7e6; border-color: #faad14; color: #d48806; }
+    .ai-feedback-status {
+      font-size: 11px;
+      color: #999;
+    }
+    .ai-feedback-correction {
+      margin-top: 6px;
+      display: flex;
+      gap: 6px;
+      align-items: flex-end;
+    }
+    .ai-feedback-correction.hidden { display: none; }
+    .ai-feedback-correction textarea {
+      flex: 1;
+      resize: none;
+      border: 1px solid rgba(0,0,0,0.15);
+      border-radius: 4px;
+      padding: 6px 8px;
+      font-size: 12px;
+      font-family: "Microsoft YaHei UI", sans-serif;
+      line-height: 1.4;
+      background: #fff;
+      color: #333;
+      outline: none;
+    }
+    .ai-feedback-correction textarea:focus { border-color: #276ace; }
+    .ai-feedback-submit {
+      padding: 4px 12px;
+      background: #276ace;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .ai-feedback-submit:hover { background: #1d5bbf; }
+
+    #aiDisclaimer {
+      text-align: right;
+      padding: 2px 16px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+      flex-shrink: 0;
+      -webkit-app-region: no-drag;
+    }
+
+    #aiInputArea {
+      display: flex;
+      gap: 10px;
+      padding: 10px 16px;
+      border-top: 1px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.1);
+      flex-shrink: 0;
+      align-items: flex-end;
+      -webkit-app-region: no-drag;
+    }
+
+    #aiInput {
+      flex: 1;
+      resize: none;
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 14px;
+      font-family: "Microsoft YaHei UI", sans-serif;
+      background: rgba(255,255,255,0.15);
+      color: white;
+      outline: none;
+      line-height: 1.5;
+    }
+
+    #aiInput::placeholder { color: rgba(255,255,255,0.5); }
+    #aiInput:focus { border-color: rgba(255,255,255,0.7); }
+
+    #aiSendBtn {
+      padding: 8px 18px;
+      background: rgba(255,255,255,0.25);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.5);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-family: "Microsoft YaHei UI", sans-serif;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+
+    #aiSendBtn:hover { background: rgba(255,255,255,0.4); }
+    #aiSendBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    #aiQuickBtns {
+      display: flex;
+      gap: 8px;
+      padding: 6px 16px 0;
+      flex-shrink: 0;
+      -webkit-app-region: no-drag;
+    }
+    .quick-btn {
+      padding: 5px 12px;
+      background: rgba(255,255,255,0.18);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 14px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: "Microsoft YaHei UI", sans-serif;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    .quick-btn:hover { background: rgba(255,255,255,0.35); }
+    .quick-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    #aiMessages::-webkit-scrollbar { width: 6px; }
+    #aiMessages::-webkit-scrollbar-track { background: transparent; }
+    #aiMessages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 3px; }
+
+    /* 窗口控制按钮 */
+    .win-controls {
+      display: flex;
+      gap: 2px;
+      position: relative;
+      z-index: 100;
+      -webkit-app-region: no-drag;
+    }
+    .win-btn {
+      width: 36px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+    .win-btn:hover { background: rgba(255,255,255,0.25); }
+    .win-btn-close:hover { background: #e81123; }
+  </style>
+</head>
+<body>
+  <div id="aiHeader">
+    <span class="title-text">术前规划智能分析助手</span>
+    <div class="win-controls">
+      <button class="win-btn" id="btnMinimize" title="最小化">─</button>
+      <button class="win-btn" id="btnMaximize" title="最大化">☐</button>
+      <button class="win-btn win-btn-close" id="btnClose" title="关闭">✕</button>
+    </div>
+  </div>
+  <div id="aiMessages"></div>
+  <div id="aiDisclaimer">以上内容仅供参考，具体以术中情况为准</div>
+  <div id="aiQuickBtns">
+    <button class="quick-btn" id="btnAnalyzeCT">分析CT影像</button>
+  </div>
+  <div id="aiInputArea">
+    <textarea id="aiInput" placeholder="输入问题，Enter发送，Shift+Enter换行" rows="2"></textarea>
+    <button id="aiSendBtn">发送</button>
+  </div>
+
+<script>
+const aiMessages = document.getElementById('aiMessages');
+const aiInput = document.getElementById('aiInput');
+const aiSendBtn = document.getElementById('aiSendBtn');
+const btnAnalyzeCT = document.getElementById('btnAnalyzeCT');
+
+function setInputBusy(busy) {
+  aiSendBtn.disabled = busy;
+  aiSendBtn.textContent = busy ? '生成中...' : '发送';
+  btnAnalyzeCT.disabled = busy;
+}
+
+function appendUserMessage(text) {
+  const div = document.createElement('div');
+  div.className = 'ai-msg ai-msg-user';
+  div.textContent = text;
+  aiMessages.appendChild(div);
+  aiMessages.scrollTop = aiMessages.scrollHeight;
+}
+
+function createAssistantBubble() {
+  const div = document.createElement('div');
+  div.className = 'ai-msg ai-msg-assistant';
+
+  const header = document.createElement('div');
+  header.className = 'ai-think-header';
+  header.style.display = 'none';
+
+  const arrow = document.createElement('span');
+  arrow.className = 'ai-think-arrow';
+  arrow.textContent = '▶';
+
+  const timeSpan = document.createElement('span');
+  timeSpan.className = 'ai-think-time';
+
+  header.appendChild(arrow);
+  header.appendChild(timeSpan);
+  div.appendChild(header);
+
+  const details = document.createElement('div');
+  details.className = 'ai-think-details';
+  details.style.display = 'none';
+  const pre = document.createElement('pre');
+  details.appendChild(pre);
+  div.appendChild(details);
+
+  header.addEventListener('click', function() {
+    const shown = details.style.display !== 'none';
+    details.style.display = shown ? 'none' : 'block';
+    arrow.textContent = shown ? '▶' : '▼';
+  });
+
+  const body = document.createElement('div');
+  body.className = 'ai-msg-body';
+  div.appendChild(body);
+
+  aiMessages.appendChild(div);
+  return { div, body, header, timeSpan, pre, details };
+}
+
+let currentBubble = null;
+let lastQuestion = '';    // 记录最近一次用户问题（用于反馈提交）
+let lastAnswer = '';      // 记录最近一次AI回答（用于反馈提交）
+let lastContext = {};     // 记录最近一次上下文快照
+
+function createFeedbackBar(div, question, answer) {
+  const bar = document.createElement('div');
+  bar.className = 'ai-feedback-bar hidden';
+
+  const btnAdopt = document.createElement('button');
+  btnAdopt.className = 'ai-feedback-btn';
+  btnAdopt.textContent = '👍 采纳';
+
+  const btnCorrect = document.createElement('button');
+  btnCorrect.className = 'ai-feedback-btn';
+  btnCorrect.textContent = '👎 纠正';
+
+  const statusSpan = document.createElement('span');
+  statusSpan.className = 'ai-feedback-status';
+
+  bar.appendChild(btnAdopt);
+  bar.appendChild(btnCorrect);
+  bar.appendChild(statusSpan);
+  div.appendChild(bar);
+
+  // 纠正输入区域
+  const correctionArea = document.createElement('div');
+  correctionArea.className = 'ai-feedback-correction hidden';
+  const textarea = document.createElement('textarea');
+  textarea.placeholder = '请输入正确的回答内容...';
+  textarea.rows = 3;
+  const submitBtn = document.createElement('button');
+  submitBtn.className = 'ai-feedback-submit';
+  submitBtn.textContent = '提交纠正';
+  correctionArea.appendChild(textarea);
+  correctionArea.appendChild(submitBtn);
+  div.appendChild(correctionArea);
+
+  function setButtonsDisabled(disabled) {
+    btnAdopt.disabled = disabled;
+    btnCorrect.disabled = disabled;
+  }
+
+  async function submitFeedback(feedType, correction) {
+    setButtonsDisabled(true);
+    const feedbackData = {
+      question: question,
+      answer: answer,
+      context_snapshot: lastContext || {},
+      feedback_type: feedType,
+      correction: correction || ''
+    };
+    try {
+      const result = await window.electronapi.saveAiFeedback(feedbackData);
+      if (result && result.success) {
+        if (feedType === 'adopted') {
+          btnAdopt.classList.add('adopted');
+          statusSpan.textContent = '已采纳';
+        } else if (feedType === 'corrected') {
+          btnCorrect.classList.add('corrected');
+          statusSpan.textContent = '已纠正';
+          correctionArea.classList.add('hidden');
+        }
+      } else {
+        statusSpan.textContent = '保存失败';
+        setButtonsDisabled(false);
+      }
+    } catch (e) {
+      console.error('[feedback] 提交失败:', e);
+      statusSpan.textContent = '保存失败';
+      setButtonsDisabled(false);
+    }
+  }
+
+  btnAdopt.addEventListener('click', () => {
+    submitFeedback('adopted');
+  });
+
+  btnCorrect.addEventListener('click', () => {
+    correctionArea.classList.toggle('hidden');
+    if (!correctionArea.classList.contains('hidden')) {
+      textarea.focus();
+    }
+  });
+
+  submitBtn.addEventListener('click', () => {
+    const correctionText = textarea.value.trim();
+    if (!correctionText) {
+      textarea.focus();
+      return;
+    }
+    submitFeedback('corrected', correctionText);
+  });
+
+  textarea.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      submitBtn.click();
+    }
+  });
+
+  return {
+    show() { bar.classList.remove('hidden'); },
+    bar
+  };
+}
+
+// 监听主进程转发的流式数据
+console.log('[AI] 注册 onAiChatStream 监听器');
+window.electronapi.onAiChatStream(function(msg) {
+  console.log('[AI] 收到流式数据:', msg.type, msg);
+  if (msg.type === 'start') {
+    currentBubble = createAssistantBubble();
+    lastAnswer = '';
+  } else if (msg.type === 'chunk') {
+    if (!currentBubble) currentBubble = createAssistantBubble();
+    currentBubble.body.textContent += msg.content;
+    lastAnswer += msg.content;
+    aiMessages.scrollTop = aiMessages.scrollHeight;
+  } else if (msg.type === 'end') {
+    if (!currentBubble) currentBubble = createAssistantBubble();
+    currentBubble.header.style.display = 'flex';
+    currentBubble.timeSpan.textContent = '思考耗时 ' + msg.elapsed + 's';
+    currentBubble.pre.textContent = msg.context || '无';
+    // 参考文献（程序化展示，始终可见）
+    if (Array.isArray(msg.refs) && msg.refs.length) {
+      const foot = document.createElement('div');
+      foot.className = 'ai-citation-footer';
+      const label = document.createElement('div');
+      label.className = 'ai-citation-label';
+      label.textContent = '参考文献';
+      foot.appendChild(label);
+      msg.refs.forEach(function(r) {
+        const item = document.createElement('div');
+        item.className = 'ai-citation-item';
+        const name = (r.source_file || '').replace(/\\/g, '/').split('/').pop();
+        let pageText = '';
+        if (Array.isArray(r.pages) && r.pages.length) {
+          const sp = r.pages.slice().sort(function(a, b) { return a - b; });
+          pageText = '（第' + sp.join(',') + '页）';
+        }
+        item.textContent = name + pageText;
+        foot.appendChild(item);
+      });
+      currentBubble.div.appendChild(foot);
+    }
+    // 显示反馈按钮
+    const fb = createFeedbackBar(currentBubble.div, lastQuestion, lastAnswer);
+    fb.show();
+    currentBubble = null;
+    setInputBusy(false);
+  } else if (msg.type === 'error') {
+    if (currentBubble) {
+      currentBubble.body.textContent += '\n[错误] ' + msg.message;
+      currentBubble = null;
+    }
+    setInputBusy(false);
+  }
+});
+
+// 发送消息（不 await aiChat，由 onAiChatStream 处理流式数据和状态）
+async function sendAiMessage(question) {
+  question = question || aiInput.value.trim();
+  if (!question) return;
+
+  appendUserMessage(question);
+  aiInput.value = '';
+  setInputBusy(true);
+  lastQuestion = question;
+  lastAnswer = '';
+  console.log('[AI] sendAiMessage called, question:', question);
+
+  try {
+    const context = await window.electronapi.getAiContext();
+    console.log('[AI] context:', context);
+    lastContext = context || {};
+    const argJson = JSON.stringify({ question, context });
+    console.log('[AI] calling aiChat...');
+    // 不 await，让 onAiChatStream 接收流式数据并管理状态
+    window.electronapi.aiChat(argJson).then(result => {
+      console.log('[AI] aiChat result:', result);
+      if (!result || !result.success) {
+        // 错误已通过 onAiChatStream 处理，这里只做兜底
+        console.warn('[AI] aiChat failed:', result);
+      }
+    }).catch(e => {
+      console.error('[AI] aiChat error:', e);
+      appendUserMessage('请求失败: ' + e.message);
+      setInputBusy(false);
+    });
+  } catch (e) {
+    console.error('[AI] getAiContext error:', e);
+    appendUserMessage('请求失败: ' + e.message);
+    setInputBusy(false);
+  }
+}
+
+aiSendBtn.addEventListener('click', () => sendAiMessage());
+
+btnAnalyzeCT.addEventListener('click', async () => {
+  // 检查是否已加载 CT 影像
+  let ctx;
+  try {
+    ctx = await window.electronapi.getAiContext();
+    console.log('[分析CT] ctx:', ctx);
+  } catch (e) {
+    console.error('[分析CT] getAiContext error:', e);
+    appendUserMessage('获取上下文失败: ' + e.message);
+    return;
+  }
+  if (!ctx || !ctx.nifti_path) {
+    appendUserMessage('请先加载患者CT影像');
+    return;
+  }
+  sendAiMessage('请分析当前患者的CT影像，给出影像学分析报告，包括骨质情况、关节形态和手术相关发现。');
+});
+
+aiInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendAiMessage();
+  }
+});
+const btnMin = document.getElementById('btnMinimize');
+const btnMax = document.getElementById('btnMaximize');
+const btnCls = document.getElementById('btnClose');
+
+console.log('按钮元素:', btnMin, btnMax, btnCls);
+console.log('electronapi:', window.electronapi);
+
+btnMin.addEventListener('click', function() {
+  console.log('点击最小化');
+  try { window.electronapi.aiMinimize(); } catch(e) { console.error('minimize错误:', e); }
+});
+btnMax.addEventListener('click', function() {
+  console.log('点击最大化');
+  try { window.electronapi.aiMaximize(); } catch(e) { console.error('maximize错误:', e); }
+});
+btnCls.addEventListener('click', function() {
+  console.log('点击关闭');
+  try { window.electronapi.aiClose(); } catch(e) { console.error('close错误:', e); }
+});
+</script>
+</body>
+</html>
